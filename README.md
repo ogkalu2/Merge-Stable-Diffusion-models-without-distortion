@@ -1,4 +1,4 @@
-# Merge-Stable-Diffusion-models-without-latent-space-distortion
+# Merge-Stable-Diffusion-models-without-distortion
 I wrote the permutation spec for Stable Diffusion necessary to merge with the git-re-basin method outlined here - https://github.com/samuela/git-re-basin.
 This is based on a 3rd-party python implementation of that here - https://github.com/themrzmaster/git-re-basin-pytorch.
 
