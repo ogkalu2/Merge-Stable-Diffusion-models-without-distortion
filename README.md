@@ -12,4 +12,4 @@ Download the code folder, open cmd in the directory, transfer the desired models
 If not in the same directory then 
 pathofmodela.ckpt and pathofmodelb.ckpt instead
 
-This will not run GPU only so don't bother trying. There are many layers so merging will take a while. That's why i decided to create this before testing myself. 
+This will not run GPU only so don't bother trying. There are many layers so merging will take a long time. That's why i decided to create this before testing myself. 
