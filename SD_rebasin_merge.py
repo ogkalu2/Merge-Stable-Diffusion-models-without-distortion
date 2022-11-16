@@ -24,7 +24,7 @@ final_permutation = weight_matching(permutation_spec,
                                         flatten_params(state_a), flatten_params(state_b))
               
 
-updated_params = unflatten_params(apply_permutation(permutation_spec, final_permutation, flatten_params(theta_b)))
+updated_params = unflatten_params(apply_permutation(permutation_spec, final_permutation, flatten_params(state_b)))
 
 
 
