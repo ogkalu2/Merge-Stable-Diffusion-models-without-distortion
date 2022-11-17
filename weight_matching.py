@@ -452,7 +452,7 @@ def sdunet_permutation_spec() -> PermutationSpec:
      **norm("first_stage_model.encoder.norm_out", "P_bg337"),
      **conv("first_stage_model.encoder.conv_out", "P_bg338", "P_bg339"),
 
-     **conv("first_stage_model.encoder.conv_in", "P_bg340", "P_bg341"),
+     **conv("first_stage_model.decoder.conv_in", "P_bg340", "P_bg341"),
      
      #decoder mid-block
      **easyblock2("first_stage_model.decoder.mid.block_1", "P_bg342"),
