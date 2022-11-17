@@ -3,8 +3,7 @@ I wrote the permutation spec for Stable Diffusion necessary to merge with the gi
 This is based on a 3rd-party python implementation of that here - https://github.com/themrzmaster/git-re-basin-pytorch.
 
 The results of a model merge have not been tested yet but I am done with the spec.
-To merge, you will need to install flax, jaxlib and pytorch 1.11.0 or lower (1.12.0 will not work). 
-To install jax on windows, follow the instructions here - https://github.com/cloudhan/jax-windows-builder
+To merge, you will need to install pytorch 1.11.0 or lower (1.12.0 will not work). 
 
 Download the code folder, open cmd in the directory, transfer the desired models to the same folder and run 
 "python SD_rebasin_merge.py --model_a nameofmodela.ckpt --model_b nameofmodelb.ckpt"
