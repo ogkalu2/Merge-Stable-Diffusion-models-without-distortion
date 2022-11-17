@@ -3,16 +3,6 @@ from re import L
 from typing import NamedTuple
 import torch
 from scipy.optimize import linear_sum_assignment
-from flax import traverse_util
-from flax.core import freeze, unfreeze
-
-def flatten_params(params):
-  return {".".join(k): v for k, v in traverse_util.flatten_dict(unfreeze(params)).items()}
-
-def unflatten_params(flat_params):
-  return freeze(
-      traverse_util.unflatten_dict({tuple(k.split(".")): v
-                                    for k, v in flat_params.items()}))
 
 class PermutationSpec(NamedTuple):
   perm_to_axes: dict
