@@ -46,7 +46,7 @@ if os.path.isfile(output_file):
 print("Saving...")
 
 torch.save({
-        "state_dict": state_b(updated_params)
+        "state_dict": updated_params
             }, output_file)
 
 print("Done!")
