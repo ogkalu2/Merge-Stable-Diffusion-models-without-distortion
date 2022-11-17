@@ -20,11 +20,10 @@ state_b = model_b["state_dict"]
 
 
 permutation_spec = sdunet_permutation_spec()
-final_permutation = weight_matching(permutation_spec,
-                                        flatten_params(state_a), flatten_params(state_b))
+final_permutation = weight_matching(permutation_spec, state_a, state_b)
               
 
-updated_params = unflatten_params(apply_permutation(permutation_spec, final_permutation, flatten_params(state_b)))
+updated_params = apply_permutation(permutation_spec, final_permutation, state_b)
 
 
 
