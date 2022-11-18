@@ -767,9 +767,11 @@ def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=No
 
     # None indicates that there is no permutation relevant to that axis.
     if p is not None:
-      w = torch.index_select(w, axis, perm[p].int())
+      c = torch.index_select(w, axis, perm[p].int())
+    else:
+      c = w
 
-  return w
+  return c
 
 def apply_permutation(ps: PermutationSpec, perm, params):
   """Apply a `perm` to `params`."""
