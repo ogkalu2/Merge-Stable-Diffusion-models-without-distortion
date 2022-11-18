@@ -22,10 +22,9 @@ state_b = model_b["state_dict"]
 permutation_spec = sdunet_permutation_spec()
 final_permutation = weight_matching(permutation_spec, state_a, state_b)
               
-for k in get_permuted_param(permutation_spec, final_permutation, k, state_b):
-    for key in state_a.keys():
-        state_a[key]=k
-
+for a in state_b.keys():
+    result = get_permuted_param(permutation_spec, final_permutation, a, state_b)
+    state_b[a] = result
 
 output_file = f'{args.output}.ckpt'
 
@@ -45,7 +44,7 @@ if os.path.isfile(output_file):
 print("Saving...")
 
 torch.save({
-        "state_dict": state_a
+        "state_dict": state_b
             }, output_file)
 
 print("Done!")
