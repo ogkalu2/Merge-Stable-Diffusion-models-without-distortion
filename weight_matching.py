@@ -790,9 +790,9 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=100, init_
       A = torch.zeros((n, n))
       for wk, axis in ps.perm_to_axes[p]:
         w_a = params_a[wk]
-        for k in params_b.keys():
-          w = params_b[k]
-          for axis, p in enumerate(ps.axes_to_perm[k]):
+        for d in params_b.keys():
+          w = params_b[d]
+          for axis, p in enumerate(ps.axes_to_perm[wk]):
            # Skip the axis we're trying to permute.
            if axis == None:
             continue
