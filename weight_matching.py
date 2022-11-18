@@ -4,6 +4,9 @@ from typing import NamedTuple
 import torch
 from scipy.optimize import linear_sum_assignment
 
+import jax.numpy as jnp
+from jax import random
+
 class PermutationSpec(NamedTuple):
   perm_to_axes: dict
   axes_to_perm: dict
@@ -804,14 +807,15 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=100, init_
        
         A += w_a @ w_b.T
 
-      ri, ci = linear_sum_assignment(A.detach().numpy(), maximize=True)
-      assert (torch.tensor(ri) == torch.arange(len(ri))).all()
-      oldL = torch.einsum('ij,ij->i', A, torch.eye(n)[perm[p].long()]).sum()
-      newL = torch.einsum('ij,ij->i', A,torch.eye(n)[ci, :]).sum()
-      print(f"{iteration}/{p}: {newL - oldL}")
+      ri, ci = linear_sum_assignment(A, maximize=True)
+      assert (ri == jnp.arange(len(ri))).all()
+
+      oldL = jnp.vdot(A, jnp.eye(n)[perm[p]])
+      newL = jnp.vdot(A, jnp.eye(n)[ci, :])
+      if not silent: print(f"{iteration}/{p}: {newL - oldL}")
       progress = progress or newL > oldL + 1e-12
 
-      perm[p] = torch.Tensor(ci)
+      perm[p] = jnp.array(ci)
 
     if not progress:
       break
