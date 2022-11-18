@@ -759,8 +759,10 @@ def vgg16_permutation_spec() -> PermutationSpec:
 
 def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=None):
   """Get parameter `k` from `params`, with the permutations applied."""
+  w = params[k]
+  c = torch.index_select(w, axis, perm[p].int())
+  
   for axis, p in enumerate(ps.axes_to_perm[k]):
-    w = params[k]
     # Skip the axis we're trying to permute.
     if axis == except_axis:
       continue
@@ -770,7 +772,7 @@ def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=No
       c = torch.index_select(w, axis, perm[p].int())
     else:
       c = w
-    return c
+return c
 
 def apply_permutation(ps: PermutationSpec, perm, params):
   """Apply a `perm` to `params`."""
