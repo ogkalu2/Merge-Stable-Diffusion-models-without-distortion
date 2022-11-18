@@ -22,9 +22,8 @@ state_b = model_b["state_dict"]
 permutation_spec = sdunet_permutation_spec()
 final_permutation = weight_matching(permutation_spec, state_a, state_b)
               
-for k in state_a.keys():
-    w = state_a[k]
-    for axis, p in enumerate(permutation_spec.axes_to_perm[k]):
+for w in state_b.keys():
+    for axis, p in enumerate(permutation_spec.axes_to_perm[w]):
         if axis == None:
          continue
 
@@ -33,7 +32,6 @@ for k in state_a.keys():
 
 for key in state_b.keys():
     state_b[key] = w
-
 
 
 output_file = f'{args.output}.ckpt'
