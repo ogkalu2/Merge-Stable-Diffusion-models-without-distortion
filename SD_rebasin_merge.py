@@ -30,10 +30,8 @@ for a in state_b.keys():
             continue
         # None indicates that there is no permutation relevant to that axis.
         if p is not None:
-            c = torch.index_select(w, axis, final_permutation[p].int())
-        else:
-            c = w
-    state_b[a] = c
+            w = torch.index_select(w, axis, final_permutation[p].int())
+    state_b[a] = w
 
 output_file = f'{args.output}.ckpt'
 
