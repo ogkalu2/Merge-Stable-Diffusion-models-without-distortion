@@ -2,7 +2,7 @@ import argparse
 import torch
 import os
 
-from weight_matching import sdunet_permutation_spec, weight_matching, apply_permutation
+from weight_matching import sdunet_permutation_spec, weight_matching
 
 parser = argparse.ArgumentParser(description= "Merge two stable diffusion models with git re-basin")
 parser.add_argument("--model_a", type=str, help="Path to model a")
@@ -22,8 +22,17 @@ state_b = model_b["state_dict"]
 permutation_spec = sdunet_permutation_spec()
 final_permutation = weight_matching(permutation_spec, state_a, state_b)
               
+for k in state_a.keys():
+    w = state_a[k]
+    for axis, p in enumerate(permutation_spec.axes_to_perm[k]):
+        if axis == None:
+         continue
 
-updated_params = apply_permutation(permutation_spec, final_permutation, state_b)
+        if p is not None:
+            w = torch.index_select(w, axis, final_permutation[p].int())
+
+for key in state_b.keys():
+    state_b[key] = w
 
 
 
@@ -45,7 +54,7 @@ if os.path.isfile(output_file):
 print("Saving...")
 
 torch.save({
-        "state_dict": updated_params
+        "state_dict": state_b
             }, output_file)
 
 print("Done!")
