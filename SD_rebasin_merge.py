@@ -23,8 +23,17 @@ permutation_spec = sdunet_permutation_spec()
 final_permutation = weight_matching(permutation_spec, state_a, state_b)
               
 for a in state_b.keys():
-    result = get_permuted_param(permutation_spec, final_permutation, a, state_b)
-    state_b[a] = result
+    w = state_b[a]
+    for axis, p in enumerate(permutation_spec.axes_to_perm[a]):
+        # Skip the axis we're trying to permute.
+        if axis == None:
+            continue
+        # None indicates that there is no permutation relevant to that axis.
+        if p is not None:
+            c = torch.index_select(w, axis, final_permutation[p].int())
+        else:
+            c = w
+    state_b[a] = c
 
 output_file = f'{args.output}.ckpt'
 
