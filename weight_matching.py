@@ -798,11 +798,8 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=100, init_
             continue
            # None indicates that there is no permutation relevant to that axis.
            if p is not None:
-            c = torch.index_select(w, axis, perm[p].int())
-           else:
-            c = w
-            
-        w_b = c
+            w = torch.index_select(w, axis, perm[p].int())                    
+        w_b = w
         w_a = torch.moveaxis(w_a, axis, 0).reshape((n, -1))
         w_b = torch.moveaxis(w_b, axis, 0).reshape((n, -1))
        
