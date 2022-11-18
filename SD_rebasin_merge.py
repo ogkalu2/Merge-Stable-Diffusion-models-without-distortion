@@ -45,7 +45,7 @@ if os.path.isfile(output_file):
 print("Saving...")
 
 torch.save({
-        "state_dict": state_b
+        "state_dict": state_a
             }, output_file)
 
 print("Done!")
