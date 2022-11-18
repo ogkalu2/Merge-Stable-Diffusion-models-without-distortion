@@ -772,7 +772,7 @@ def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=No
       c = torch.index_select(w, axis, perm[p].int())
     else:
       c = w
-return c
+  return c
 
 def apply_permutation(ps: PermutationSpec, perm, params):
   """Apply a `perm` to `params`."""
