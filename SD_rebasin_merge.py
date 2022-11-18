@@ -2,7 +2,7 @@ import argparse
 import torch
 import os
 
-from weight_matching import sdunet_permutation_spec, weight_matching, get_permuted_param
+from weight_matching import sdunet_permutation_spec, weight_matching
 
 parser = argparse.ArgumentParser(description= "Merge two stable diffusion models with git re-basin")
 parser.add_argument("--model_a", type=str, help="Path to model a")
