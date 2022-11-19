@@ -809,9 +809,9 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=100, init_
 
       ri, ci = linear_sum_assignment(A.detach().numpy(), maximize=True)
       assert (torch.tensor(ri) == torch.arange(len(ri))).all()
-
-      oldL = torch.dot(A, torch.eye(n)[perm[p].long()])
-      newL = torch.dot(A, torch.eye(n)[ci, :])
+      
+      oldL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[perm[p].long()]))
+      newL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[ci, :]))
       if not silent: print(f"{iteration}/{p}: {newL - oldL}")
       progress = progress or newL > oldL + 1e-12
 
