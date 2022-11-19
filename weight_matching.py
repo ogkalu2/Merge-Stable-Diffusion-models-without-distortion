@@ -783,10 +783,9 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=100, init_
   for p, axes in ps.perm_to_axes.items():
     if p in params_a:
       perm_sizes = {p: params_a[axes[0][0]].shape[axes[0][1]]}
+      perm = {p: torch.arange(n) for p, n in perm_sizes.items()} if init_perm is None else init_perm
+      perm_names = list(perm.keys())
     else: continue
-
-  perm = {p: torch.arange(n) for p, n in perm_sizes.items()} if init_perm is None else init_perm
-  perm_names = list(perm.keys())
 
   for iteration in range(max_iter):
     progress = False
