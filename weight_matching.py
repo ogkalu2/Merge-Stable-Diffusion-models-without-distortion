@@ -781,7 +781,7 @@ def apply_permutation(ps: PermutationSpec, perm, params):
 def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=100, init_perm=None):
   """Find a permutation of `params_b` to make them match `params_a`."""
   for p, axes in ps.perm_to_axes.items():
-    if p in params_a and axes in params_a:
+    if p in params_a:
       perm_sizes = {p: params_a[axes[0][0]].shape[axes[0][1]]}
     else: continue
 
