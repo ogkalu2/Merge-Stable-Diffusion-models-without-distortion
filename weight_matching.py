@@ -812,7 +812,7 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=100, init_
       
       oldL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[perm[p].long()]))
       newL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[ci, :]))
-      if not silent: print(f"{iteration}/{p}: {newL - oldL}")
+      print(f"{iteration}/{p}: {newL - oldL}")
       progress = progress or newL > oldL + 1e-12
 
       perm[p] = torch.Tensor(ci)
