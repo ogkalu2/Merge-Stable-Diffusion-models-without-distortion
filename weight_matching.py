@@ -807,15 +807,15 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=100, init_
        
         A += w_a @ w_b.T
 
-      ri, ci = linear_sum_assignment(A, maximize=True)
-      assert (ri == jnp.arange(len(ri))).all()
+      ri, ci = linear_sum_assignment(A.detach().numpy(), maximize=True)
+      assert (torch.tensor(ri) == torch.arange(len(ri))).all()
 
       oldL = jnp.vdot(A, jnp.eye(n)[perm[p]])
       newL = jnp.vdot(A, jnp.eye(n)[ci, :])
       if not silent: print(f"{iteration}/{p}: {newL - oldL}")
       progress = progress or newL > oldL + 1e-12
 
-      perm[p] = jnp.array(ci)
+      perm[p] = torch.Tensor(ci)
 
     if not progress:
       break
