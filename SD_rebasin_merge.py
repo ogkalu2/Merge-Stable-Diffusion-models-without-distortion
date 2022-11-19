@@ -20,7 +20,7 @@ state_b = model_b["state_dict"]
 
 
 permutation_spec = sdunet_permutation_spec()
-final_permutation = weight_matching(permutation_spec, state_a, state_b)
+final_permutation = weight_matching(permutation_spec, state_a, state_b, device)
               
 for a in state_b.keys():
     w = state_b[a]
