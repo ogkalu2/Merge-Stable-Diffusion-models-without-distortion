@@ -760,7 +760,7 @@ def vgg16_permutation_spec() -> PermutationSpec:
       **dense("classifier", "P_Conv_40", "P_Dense_0", False),
 })
 
-def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=None):
+def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=None, device=None):
   """Get parameter `k` from `params`, with the permutations applied."""
   w = params[k]
   for axis, p in enumerate(ps.axes_to_perm[k]):
@@ -770,7 +770,10 @@ def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=No
 
     # None indicates that there is no permutation relevant to that axis.
     if p is not None:
-      w = torch.index_select(w, axis, perm[p].int())
+      if device is not None:
+        w = torch.index_select(w, axis, perm[p].int().to(device))
+      else:
+        w = torch.index_select(w, axis, perm[p].int())
 
   return w
 
@@ -790,20 +793,20 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, device, max_iter=10
     for p_ix in torch.randperm(len(perm_names)):
       p = perm_names[p_ix]
       n = perm_sizes[p]
-      A = torch.zeros((n, n))
+      A = torch.zeros((n, n), device=device)
       for wk, axis in ps.perm_to_axes[p]:
         w_a = params_a[wk]                   
-        w_b = get_permuted_param(ps, perm, wk, params_b, except_axis=axis)
+        w_b = get_permuted_param(ps, perm, wk, params_b, except_axis=axis, device=device)
         w_a = torch.moveaxis(w_a, axis, 0).reshape((n, -1))
         w_b = torch.moveaxis(w_b, axis, 0).reshape((n, -1))
        
         A += w_a @ w_b.T
 
-      ri, ci = linear_sum_assignment(A.detach().numpy(), maximize=True)
-      assert (torch.tensor(ri) == torch.arange(len(ri))).all()
+      ri, ci = linear_sum_assignment(A.cpu().detach().numpy(), maximize=True)
+      assert (torch.tensor(ri, device=device) == torch.arange(len(ri), device=device)).all()
       
-      oldL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[perm[p].long()]))
-      newL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[ci, :]))
+      oldL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n,device=device)[perm[p].long()]))
+      newL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n,device=device)[ci, :]))
       print(f"{iteration}/{p}: {newL - oldL}")
       progress = progress or newL > oldL + 1e-12
 
