@@ -1,8 +1,7 @@
 import argparse
 import torch
 import os
-
-from jax import random 
+ 
 from weight_matching import sdunet_permutation_spec, weight_matching
 
 parser = argparse.ArgumentParser(description= "Merge two stable diffusion models with git re-basin")
@@ -14,7 +13,6 @@ parser.add_argument("--seed", type=int, default=0, help="Random seed")
 
 args = parser.parse_args()   
 device = args.device
-seed = args.seed
 
 model_a = torch.load(args.model_a, map_location=device)
 model_b = torch.load(args.model_b, map_location=device)
@@ -23,7 +21,7 @@ state_b = model_b["state_dict"]
 
 
 permutation_spec = sdunet_permutation_spec()
-final_permutation = weight_matching(random.PRNGKey(seed), permutation_spec, state_a, state_b)
+final_permutation = weight_matching(permutation_spec, state_a, state_b)
               
 for a in state_b.keys():
     w = state_b[a]
