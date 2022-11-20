@@ -4,10 +4,6 @@ from typing import NamedTuple
 import torch
 from scipy.optimize import linear_sum_assignment
 
-import jax.numpy as jnp
-from jax import random
-
-rngmix = lambda rng, x: random.fold_in(rng, hash(x))
 
 class PermutationSpec(NamedTuple):
   perm_to_axes: dict
@@ -780,7 +776,7 @@ def apply_permutation(ps: PermutationSpec, perm, params):
   """Apply a `perm` to `params`."""
   return {k: get_permuted_param(ps, perm, k, params) for k in params.keys()}
 
-def weight_matching(rng, ps: PermutationSpec, params_a, params_b, max_iter=100, init_perm=None):
+def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=100, init_perm=None):
   """Find a permutation of `params_b` to make them match `params_a`."""
   perm_sizes = {p: params_a[axes[0][0]].shape[axes[0][1]] for p, axes in ps.perm_to_axes.items()}
   perm = {p: torch.arange(n) for p, n in perm_sizes.items()} if init_perm is None else init_perm
@@ -788,7 +784,7 @@ def weight_matching(rng, ps: PermutationSpec, params_a, params_b, max_iter=100, 
 
   for iteration in range(max_iter):
     progress = False
-    for p_ix in random.permutation(rngmix(rng, iteration), len(perm_names)):
+    for p_ix in touch.randperm(len(perm_names)):
       p = perm_names[p_ix]
       n = perm_sizes[p]
       A = torch.zeros((n, n))
