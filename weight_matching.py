@@ -802,9 +802,6 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=20, init_p
 
       perm[p] = torch.Tensor(ci)
 
-    if not progress:
-      break
-
   return perm
 
 def test_weight_matching():
