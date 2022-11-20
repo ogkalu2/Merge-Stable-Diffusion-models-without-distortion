@@ -2,6 +2,7 @@ import argparse
 import torch
 import os
 
+from jax import random 
 from weight_matching import sdunet_permutation_spec, weight_matching
 
 parser = argparse.ArgumentParser(description= "Merge two stable diffusion models with git re-basin")
