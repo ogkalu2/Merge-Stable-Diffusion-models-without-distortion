@@ -4,8 +4,6 @@ from typing import NamedTuple
 import torch
 from scipy.optimize import linear_sum_assignment
 
-rngmix = lambda rng, x: random.fold_in(rng, hash(x))
-
 class PermutationSpec(NamedTuple):
   perm_to_axes: dict
   axes_to_perm: dict
@@ -779,7 +777,9 @@ def apply_permutation(ps: PermutationSpec, perm, params):
   """Apply a `perm` to `params`."""
   return {k: get_permuted_param(ps, perm, k, params) for k in params.keys()}
 
-def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=20, init_perm=None):
+
+def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=100, init_perm=None):
+
   """Find a permutation of `params_b` to make them match `params_a`."""
   perm_sizes = {p: params_a[axes[0][0]].shape[axes[0][1]] for p, axes in ps.perm_to_axes.items()}
   print(perm_sizes)
@@ -788,6 +788,7 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=20, init_p
   print(len(perm_names))
   for iteration in range(max_iter):
     progress = False
+
     for p_ix in torch.randperm(len(perm_names)):
       p = perm_names[p_ix]
       n = perm_sizes[p]
