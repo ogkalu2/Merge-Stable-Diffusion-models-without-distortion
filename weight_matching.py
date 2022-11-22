@@ -3,6 +3,7 @@ from re import L
 from typing import NamedTuple
 import torch
 from scipy.optimize import linear_sum_assignment
+import time
 
 rngmix = lambda rng, x: random.fold_in(rng, hash(x))
 
@@ -80,6 +81,8 @@ def sdunet_permutation_spec() -> PermutationSpec:
      **skip("posterior_mean_coef1", None, None),
      **skip("posterior_mean_coef2", None, None),
      **skip("log_one_minus_alphas_cumprod", None, None),
+     **skip("model_ema.decay", None, None),
+     **skip("model_ema.num_updates", None, None),
 
      #initial 
      **dense("model.diffusion_model.time_embed.0", None, "P_bg0", bias=True),
@@ -773,47 +776,81 @@ def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=No
     if p is not None:
       w = torch.index_select(w, axis, perm[p].int())
 
-  return w.half()
+  return w
 
 def apply_permutation(ps: PermutationSpec, perm, params):
   """Apply a `perm` to `params`."""
   return {k: get_permuted_param(ps, perm, k, params) for k in params.keys()}
 
-def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=20, init_perm=None):
+def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=1, init_perm=None, usefp16=False):
   """Find a permutation of `params_b` to make them match `params_a`."""
   perm_sizes = {p: params_a[axes[0][0]].shape[axes[0][1]] for p, axes in ps.perm_to_axes.items()}
-  print(perm_sizes)
+  perm = dict()
   perm = {p: torch.arange(n) for p, n in perm_sizes.items()} if init_perm is None else init_perm
   perm_names = list(perm.keys())
-  print(len(perm_names))
-  for iteration in range(max_iter):
-    progress = False
-    for p_ix in torch.randperm(len(perm_names)):
-      p = perm_names[p_ix]
-      n = perm_sizes[p]
-      A = torch.zeros((n, n), dtype=torch.float16)
-      for wk, axis in ps.perm_to_axes[p]:
-          w_a = params_a[wk]
-          w_b = get_permuted_param(ps, perm, wk, params_b, except_axis=axis)
-          w_a = torch.moveaxis(w_a, axis, 0).reshape((n, -1)).to("cuda")
-          w_b = torch.moveaxis(w_b, axis, 0).reshape((n, -1)).T.to("cuda")
-          A += torch.matmul(w_a, w_b).cpu()
+  if usefp16:
+    for iteration in range(max_iter):
+      progress = False
+      for p_ix in torch.randperm(len(perm_names)):
+        p = perm_names[p_ix]
+        n = perm_sizes[p]
+        A = torch.zeros((n, n), dtype=torch.float16).to("cuda")
+        for wk, axis in ps.perm_to_axes[p]:
+            w_a = params_a[wk]
+            w_b = get_permuted_param(ps, perm, wk, params_b, except_axis=axis)
+            w_a = torch.moveaxis(w_a, axis, 0).reshape((n, -1)).to("cuda")
+            w_b = torch.moveaxis(w_b, axis, 0).reshape((n, -1)).T.to("cuda")
+            A += torch.matmul(w_a.half(), w_b.half())
 
-      ri, ci = linear_sum_assignment(A.detach().numpy(), maximize=True)
+        A = A.cpu()
+        ri, ci = linear_sum_assignment(A.detach().numpy(), maximize=True)
 
-      assert (torch.tensor(ri) == torch.arange(len(ri))).all()
-      
-      oldL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[perm[p].long()]).half())
-      newL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[ci, :]).half())
-      print(f"{iteration}/{p}: {newL - oldL}")
-      progress = progress or newL > oldL + 1e-12
+        assert (torch.tensor(ri) == torch.arange(len(ri))).all()
+        
+        oldL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[perm[p]]).half())
+        newL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[ci, :]).half())
 
-      perm[p] = torch.Tensor(ci)
-      
-    if not progress:
-      break
+        if newL - oldL != 0:
+          print(f"{p}: {newL - oldL}")
 
-  return perm
+        progress = progress or newL > oldL + 1e-12
+
+        perm[p] = torch.Tensor(ci)
+        
+      if not progress:
+        break
+
+    return perm
+
+  else:
+    for iteration in range(max_iter):
+      progress = False
+      for p_ix in torch.randperm(len(perm_names)):
+        p = perm_names[p_ix]
+        n = perm_sizes[p]
+        A = torch.zeros((n, n))
+        for wk, axis in ps.perm_to_axes[p]:
+            w_a = params_a[wk]
+            w_b = get_permuted_param(ps, perm, wk, params_b, except_axis=axis).half()
+            w_a = torch.moveaxis(w_a, axis, 0).reshape((n, -1)).to("cuda")
+            w_b = torch.moveaxis(w_b, axis, 0).reshape((n, -1)).T.to("cuda")
+            A += torch.matmul(w_a, w_b).cpu()
+
+        ri, ci = linear_sum_assignment(A.detach().numpy())
+
+        assert (torch.tensor(ri) == torch.arange(len(ri))).all()
+        
+        oldL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[perm[p].long()]))
+        newL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[ci, :]))
+        print(f"{iteration}/{p}: {newL - oldL}")
+        progress = progress or newL > oldL + 1e-12
+
+        perm[p] = torch.Tensor(ci)
+        
+      if not progress:
+        break
+
+    return perm
 
 def test_weight_matching():
   """If we just have a single hidden layer then it should converge after just one step."""
