@@ -3,6 +3,7 @@ from re import L
 from typing import NamedTuple
 import torch
 from scipy.optimize import linear_sum_assignment
+
 import time
 from random import shuffle
 rngmix = lambda rng, x: random.fold_in(rng, hash(x))
@@ -782,6 +783,7 @@ def apply_permutation(ps: PermutationSpec, perm, params):
   """Apply a `perm` to `params`."""
   return {k: get_permuted_param(ps, perm, k, params) for k in params.keys()}
 
+
 def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=5, init_perm=None, usefp16=False):
   """Find a permutation of `params_b` to make them match `params_a`."""
   special_layers = ["P_bg358", "P_bg324", "P_bg337"]
@@ -789,6 +791,7 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=5, init_pe
   perm = dict()
   perm = {p: torch.arange(n) for p, n in perm_sizes.items()} if init_perm is None else init_perm
   perm_names = list(perm.keys())
+
   if usefp16:
     for iteration in range(max_iter):
       progress = False
