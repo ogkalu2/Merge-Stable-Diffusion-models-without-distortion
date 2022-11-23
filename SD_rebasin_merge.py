@@ -32,6 +32,8 @@ step = alpha/iterations
 if args.usefp16:
     print("Using half precision")
 
+permutation_spec = sdunet_permutation_spec()
+
 for x in range(iterations):
     print(f"""
     ---------------------
@@ -52,16 +54,23 @@ for x in range(iterations):
         if "model" in key and key in theta_1:
             theta_0[key] = (1 - (new_alpha)) * (theta_0[key]) + (new_alpha) * (theta_1[key])
 
-    for key in theta_1.keys():
-        if "model" in key and key not in theta_0:
-            theta_0[key] = theta_1[key]
+    if x == 0:
+        for key in theta_1.keys():
+            if "model" in key and key not in theta_0:
+                theta_0[key] = theta_1[key]
 
     print("FINDING PERMUTATIONS")
 
-    # Replace theta_0 with a permutated version using model A
-    permutation_spec = sdunet_permutation_spec()
+    # Replace theta_0 with a permutated version using model A and B    
     first_permutation = weight_matching(permutation_spec, flatten_params(model_a), theta_0, usefp16=args.usefp16)
     theta_0 = apply_permutation(permutation_spec, first_permutation, theta_0)
+    second_permutation = weight_matching(permutation_spec, flatten_params(model_b), theta_0, usefp16=args.usefp16)
+    theta_0 = apply_permutation(permutation_spec, second_permutation, theta_0)
+
+    # # Weighted sum of the permutations
+    # for key in theta_0.keys():
+    #     if "model" in key and key in theta_1:
+    #         theta_0[key] = (1 - (new_alpha)) * (theta_0[key]) + (new_alpha) * (theta_3[key])
 
 output_file = f'{args.output}.ckpt'
 
