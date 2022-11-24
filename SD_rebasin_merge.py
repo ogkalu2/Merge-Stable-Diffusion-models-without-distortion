@@ -69,7 +69,8 @@ for x in range(iterations):
     second_permutation, z = weight_matching(permutation_spec, flatten_params(model_b), theta_0, usefp16=args.usefp16)
     theta_3= apply_permutation(permutation_spec, second_permutation, theta_0)
 
-    new_alpha = y / (y + z)
+    if y + z > 0:
+        new_alpha = y / (y + z)
     print(new_alpha)
 
     # Weighted sum of the permutations
