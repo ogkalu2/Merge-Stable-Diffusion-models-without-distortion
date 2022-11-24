@@ -65,17 +65,18 @@ for x in range(iterations):
 
     # Replace theta_0 with a permutated version using model A and B    
     first_permutation, y = weight_matching(permutation_spec, flatten_params(model_a), theta_0, usefp16=args.usefp16)
-    theta_3 = apply_permutation(permutation_spec, first_permutation, theta_0)
+    theta_0 = apply_permutation(permutation_spec, first_permutation, theta_0)
     second_permutation, z = weight_matching(permutation_spec, flatten_params(model_b), theta_0, usefp16=args.usefp16)
-    theta_4= apply_permutation(permutation_spec, second_permutation, theta_0)
+    theta_3= apply_permutation(permutation_spec, second_permutation, theta_0)
 
-    new_alpha = y / (y + z)
+    if y + z > 0:
+        new_alpha = y / (y + z)
     print(new_alpha)
 
     # Weighted sum of the permutations
     for key in theta_0.keys():
         if "model" in key and key in theta_1:
-            theta_0[key] = (1 - new_alpha) * (theta_3[key]) + (new_alpha) * (theta_4[key])
+            theta_0[key] = (1 - new_alpha) * (theta_0[key]) + (new_alpha) * (theta_3[key])
 
 output_file = f'{args.output}.ckpt'
 
