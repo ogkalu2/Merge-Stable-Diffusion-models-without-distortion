@@ -3,6 +3,7 @@ from re import L
 from typing import NamedTuple
 import torch
 from scipy.optimize import linear_sum_assignment
+import time
 from random import shuffle
 
 rngmix = lambda rng, x: random.fold_in(rng, hash(x))

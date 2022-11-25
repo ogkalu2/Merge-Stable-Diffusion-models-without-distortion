@@ -12,7 +12,7 @@ parser.add_argument("--device", type=str, help="Device to use, defaults to cpu",
 parser.add_argument("--output", type=str, help="Output file name, without extension", default="merged", required=False)
 parser.add_argument("--usefp16", type=str, help="Whether to use half precision", default=True, required=False)
 parser.add_argument("--alpha", type=str, help="Ratio of model A to B", default="0.5", required=False)
-parser.add_argument("--iterations", type=str, help="Number of steps to take before reaching alpha", default="5", required=False)
+parser.add_argument("--iterations", type=str, help="Number of steps to take before reaching alpha", default="10", required=False)
 args = parser.parse_args()   
 device = args.device
 
