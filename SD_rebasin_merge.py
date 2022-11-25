@@ -1,8 +1,6 @@
 import argparse
 import torch
 import os
-import copy
-import numpy as np
 
 from weight_matching import sdunet_permutation_spec, weight_matching, apply_permutation
 
