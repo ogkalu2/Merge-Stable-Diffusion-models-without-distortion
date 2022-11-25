@@ -1,7 +1,6 @@
 import argparse
 import torch
 import os
-import copy
 
 from weight_matching import sdunet_permutation_spec, weight_matching, apply_permutation
 
@@ -28,13 +27,14 @@ theta_1 = model_b["state_dict"]
 alpha = float(args.alpha)
 iterations = int(args.iterations)
 step = alpha/iterations
+permutation_spec = sdunet_permutation_spec()
+special_keys = ["first_stage_model.decoder.norm_out.weight", "first_stage_model.decoder.norm_out.bias", "first_stage_model.encoder.norm_out.weight", 
+"first_stage_model.encoder.norm_out.bias", "model.diffusion_model.out.0.weight", "model.diffusion_model.out.0.bias"]
 
 if args.usefp16:
     print("Using half precision")
 else:
     print("Using full precision")
-
-permutation_spec = sdunet_permutation_spec()
 
 for x in range(iterations):
     print(f"""
@@ -51,10 +51,8 @@ for x in range(iterations):
         new_alpha = step
     print(f"new alpha = {new_alpha}\n")
 
-    # Add the models together in specific ratio to reach final ratio
-    for key in theta_0.keys():
-        if "model" in key and key in theta_1:
-            theta_0[key] = (1 - (new_alpha)) * (theta_0[key]) + (new_alpha) * (theta_1[key])
+
+    theta_0 = {key: (1 - (new_alpha)) * theta_0[key] + (new_alpha) * value for key, value in theta_1.items() if "model" in key and key in theta_1}
 
     if x == 0:
         for key in theta_1.keys():
@@ -69,14 +67,12 @@ for x in range(iterations):
     second_permutation, z = weight_matching(permutation_spec, flatten_params(model_b), theta_0, usefp16=args.usefp16)
     theta_3= apply_permutation(permutation_spec, second_permutation, theta_0)
 
-    if y + z > 0:
-        new_alpha = y / (y + z)
-    print(new_alpha)
+    new_alpha = torch.nn.functional.normalize(torch.sigmoid(torch.Tensor([y, z])), p=1, dim=0).tolist()[0]
 
     # Weighted sum of the permutations
-    for key in theta_0.keys():
-        if "model" in key and key in theta_1:
-            theta_0[key] = (1 - new_alpha) * (theta_0[key]) + (new_alpha) * (theta_3[key])
+    
+    for key in special_keys:
+        theta_0[key] = (1 - new_alpha) * (theta_0[key]) + (new_alpha) * (theta_3[key])
 
 output_file = f'{args.output}.ckpt'
 
