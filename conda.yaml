@@ -1,0 +1,7 @@
+name: git_re_sd_wd_gui
+channels:
+- nodefaults
+dependencies:
+- python=3.7
+
+ 
