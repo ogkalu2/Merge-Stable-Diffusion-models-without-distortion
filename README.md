@@ -28,7 +28,7 @@ If you have any questions or concerns, please don't hesitate to ask for help.
 <img src="media/preview/prune.png">
 
 
-[Windows Releases](https://github.com/diStyApps/Merge-Stable-Diffusion-models-without-distortion-gui)
+[Windows Releases](https://github.com/diStyApps/Merge-Stable-Diffusion-models-without-distortion-gui/releases)
 
 Dev:
 ```
