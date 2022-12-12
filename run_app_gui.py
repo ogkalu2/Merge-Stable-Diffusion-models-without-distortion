@@ -1,3 +1,4 @@
+import os
 import PySimpleGUI as sg
 import torch 
 import webbrowser
@@ -8,7 +9,7 @@ import util.progress_bar_custom as cpbar
 from weight_matching import sdunet_permutation_spec, weight_matching, apply_permutation
 from pruneforui import prune_it
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 APP_TITLE = f"Merge-Stable-Diffusion-models-without-distortion-GUI - Ver {__version__}"
 sg.theme('Dark Gray 15')
 
@@ -22,7 +23,10 @@ PBAR_KEY = 'progress_bar'
 #endregion
 
 file_ext = {("All", "*.ckpt"),}
- 
+
+lower, upper = 1, 100
+data = [i for i in range(lower - 1, upper + 2)]
+
 def main():
     start_time = dt.today().timestamp()
 
@@ -32,7 +36,7 @@ def main():
         sg.Frame('',[
                 [
                     sg.Button(image_data=ic.patreon,key="-patreon-",button_color=(COLOR_GRAY_9900,COLOR_GRAY_9900)),
-                    sg.Button(image_data=ic.supportme,visible=False,key="-supportme-",button_color=(COLOR_GRAY_9900,COLOR_GRAY_9900)),
+                    sg.Button(image_data=ic.buymeacoffee,key="-buymeacoffee-",button_color=(COLOR_GRAY_9900,COLOR_GRAY_9900)),
                     sg.Button(image_data=ic.github,key="-github-",button_color=(COLOR_GRAY_9900,COLOR_GRAY_9900))
                 ],
             ],expand_x=True,relief=sg.RELIEF_SOLID,border_width=1,background_color=COLOR_GRAY_9900,element_justification="r")
@@ -52,19 +56,19 @@ def main():
                 ],
                 [
                     sg.Input(key=f'-merged_model_in-',enable_events=True,expand_x=True,expand_y=True,background_color=COLOR_DARK_GRAY),
-                    sg.FileSaveAs("Merged Model",k=f'-merged_model_FileSaveAs-',file_types=(file_ext),size=(12,1))                            
+                    sg.FileSaveAs("Custom Name",k=f'-merged_model_FileSaveAs-',file_types=(file_ext),size=(12,1))                            
                 ],                     
                 [
                     sg.Combo(['cpu','gpu'],default_value='cpu',key='-selected_device-',readonly=True,text_color=COLOR_BLUE_TERMINAL,background_color=COLOR_GRAY_9900,visible=False),
-                    sg.Checkbox('usefp16',k='-usefp16_checkbox-',default=True),
-                    sg.T('alpha:'),
+                    sg.Checkbox('usefp16',k='-usefp16_checkbox-',default=True,enable_events=True,font="Ariel 12 "),
+                    sg.T('alpha:',font="Ariel 12 "),
                     sg.Slider(default_value=0.5,range=((0.01,1)),resolution=0.01,    
                     orientation='horizontal',disable_number_display=True,enable_events=True,k='-alpha_slider-',expand_x=True,s=(12,12)),   
-                    sg.In(0.5,k='-alpha_in-',s=(5,5),justification='center'),
-                    sg.T('iterations:',),
-                    sg.In(10,k='-iterations_in-',s=(5,5),justification='center'),
+                    sg.In(0.5,k='-alpha_in-',s=(5,5),justification='center',enable_events=True,readonly=True,disabled_readonly_background_color=COLOR_GRAY_1111,font="Ariel 12 "),
+                    sg.T('iterations:',font="Ariel 12 "),
+                    sg.Spin(data, initial_value=10, size=3, enable_events=True, key='-iterations_spin-',font="Ariel 12 ",),
                 ],
-        ],expand_x=True,relief=sg.RELIEF_SOLID,border_width=1,background_color=COLOR_GRAY_9900)            
+        ],expand_x=True,relief=sg.RELIEF_SOLID,border_width=1,background_color=COLOR_GRAY_9900,element_justification="c")            
      ],
     ]
 
@@ -78,7 +82,7 @@ def main():
                     ],                     
                     [    
                         sg.MLine(GREET_MSG,k='-console_ml-',visible=True,text_color='#00cc00',background_color=COLOR_GRAY_1111,border_width=0,sbar_width=20,sbar_trough_color=0,
-                        reroute_stdout=True,write_only=False,reroute_cprint=True, autoscroll=True, auto_refresh=True,size=(80,20),expand_x=True,expand_y=True,font="Ariel 11 "),
+                        reroute_stdout=True,write_only=False,reroute_cprint=True, autoscroll=True, auto_refresh=True,size=(100,20),expand_x=True,expand_y=True,font="Ariel 11 "),
                     ], 
             ],expand_x=True,expand_y=True,border_width=0,relief=sg.RELIEF_FLAT,element_justification="c",background_color=COLOR_GRAY_9900)
         ],  
@@ -112,7 +116,7 @@ def main():
 
     console_ml_widget = window["-console_ml-"] 
     patreon_widget = window["-patreon-"]
-    supportme_widget = window["-supportme-"]
+    buymeacoffee_widget = window["-buymeacoffee-"]
     github_widget = window["-github-"]
     model_a_input_widget = window["-model_a_input-"]
     model_b_input_widget = window["-model_b_input-"]
@@ -121,15 +125,16 @@ def main():
     model_b_bt_widget = window["-model_b_FileBrowse-"]
     merged_model_file_save_as_widget = window["-merged_model_FileSaveAs-"]
     alpha_in_widget = window["-alpha_in-"]
-    iterations_in_widget = window["-iterations_in-"]
     merge_models_bt_widget = window["-merge_models_bt-"]
     prune_model_bt_widget = window["-prune_model_bt-"]
+    iterations_spin_widget = window["-iterations_spin-"]
+
 
 
     widgets = {
         patreon_widget,
         github_widget,
-        supportme_widget,
+        buymeacoffee_widget,
         console_ml_widget,
         model_a_bt_widget,
         model_b_bt_widget,
@@ -138,9 +143,9 @@ def main():
         model_b_input_widget,
         merged_model_in_widget,
         alpha_in_widget,
-        iterations_in_widget,
         merged_model_file_save_as_widget,
-        prune_model_bt_widget
+        prune_model_bt_widget,
+        iterations_spin_widget
     }
 
     for widget in widgets:
@@ -152,6 +157,16 @@ def main():
         return model["state_dict"]
 
     def merge_models(model_a, model_b, device="cpu", output="merged", usefp16=True, alpha="0.5", iterations="10"):
+        print(f"""
+        ---------------------
+            model_a:    {os.path.basename(model_a)}
+            model_b:    {os.path.basename(model_b)}
+            output:     {os.path.basename(output)}
+            alpha:      {alpha}
+            usefp16:    {usefp16}  
+            iterations: {iterations}
+        ---------------------
+        """)        
         model_a = torch.load(model_a, map_location=device)
         model_b = torch.load(model_b, map_location=device)
         theta_0 = model_a["state_dict"]
@@ -182,6 +197,7 @@ def main():
             else:
                 new_alpha = step
             print(f"new alpha = {new_alpha}\n")
+            cpbar.progress_bar_custom(x,iterations,start_time,window,PBAR_KEY)
 
 
             theta_0 = {key: (1 - (new_alpha)) * theta_0[key] + (new_alpha) * value for key, value in theta_1.items() if "model" in key and key in theta_1}
@@ -208,8 +224,8 @@ def main():
                 theta_0[key] = (1 - new_alpha) * (theta_0[key]) + (new_alpha) * (theta_3[key])
 
         output_file = f'{output}'
-
-        print("\nSaving...")
+ 
+        print(f"\nSaving... \n{output_file}")
 
         torch.save({
                 "state_dict": theta_0
@@ -256,9 +272,16 @@ def main():
         prune_model_bt_widget.update(disabled=False)
         prune_model_bt_widget.update('PRUNE MODEL')
 
+    def merge_modelname(model_a, model_b, usefp16=True, alpha="0.5", iterations=10):
+        alpha_b = 1 - (float(alpha))
+        alpha_b = round(alpha_b, 2)
+        fp16 = "_fp16" if usefp16 else ""
+        output = f"{os.path.dirname(model_a)}/{os.path.splitext(os.path.basename(model_a))[0]}_{alpha}_{os.path.splitext(os.path.basename(model_b))[0]}_{alpha_b}_{iterations}it{fp16}.ckpt"
+        return output
+
     while True:
         event, values = window.read()
-
+        
         if event == sg.WIN_CLOSED:
             break
   
@@ -272,13 +295,13 @@ def main():
             device = values["-selected_device-"]
             usefp16 = values["-usefp16_checkbox-"]
             alpha = values["-alpha_in-"]
-            iterations = values["-iterations_in-"]
+            iterations = values["-iterations_spin-"]
             cpbar.progress_bar_reset(window,PBAR_KEY)      
 
             if model_a and model_b and output:
                 start_time = dt.today().timestamp()
                 cpbar.progress_bar_calc(window,PBAR_KEY)
-                merge_bt_disable()               
+                merge_bt_disable()    
                 console_ml_widget.update("")        
                 Thread(target=merge_models_t, args=(model_a, model_b, device, output, usefp16, alpha, iterations), daemon=True).start()    
             else:
@@ -307,30 +330,42 @@ def main():
             else:
                 print("missing model path")
 
+        if event in ('-alpha_slider-', '-usefp16_checkbox-','-iterations_spin-','-model_a_input-', '-model_b_input-'):
+            if values["-model_a_input-"] and values["-model_b_input-"]:
+                merged_model_in_widget.update(merge_modelname(values["-model_a_input-"], values["-model_b_input-"], usefp16=values["-usefp16_checkbox-"], alpha=values["-alpha_slider-"], iterations=values["-iterations_spin-"]))
+       
+        if event == '-iterations_spin-':
+            value = values['-iterations_spin-']
+            if value == lower - 1:
+                iterations_spin_widget.update(value=upper)
+                values['-iterations_spin-'] = upper
+            elif value == upper + 1:
+                iterations_spin_widget.update(value=lower)
+                values['-iterations_spin-'] = lower   
+
         if event == "-patreon-":
             webbrowser.open("https://www.patreon.com/distyx")      
+        if event == "-buymeacoffee-":
+            webbrowser.open("https://www.buymeacoffee.com/disty")  
         if event == "-github-":
             webbrowser.open("https://github.com/diStyApps/Merge-Stable-Diffusion-models-without-distortion-gui")  
-        if event == "-supportme-":
-            webbrowser.open("https://coindrop.to/disty")  
   
 if __name__ == '__main__':
 
     GREET_MSG=f"""
-        Instructions:
+        How to use:
 
-        Merging models:
+            Merging models:
 
-            1. Select Model A, Model B paths, Then select the Merged Model output path.
-            2. Then enter the desired prameters for the merge.
-            3. Then click the merge models button.
+                1. Select Model A, Model B paths.
+                2. Then enter the desired prameters for the merge.
+                3. Then click the "MERGE MODELS" button.
 
+            Pruning model:
 
-        Pruning model:
-
-            1. Select Model A path.
-            2. Then enter the desired parameters for the prune.
-            3. Then click the prune model button.
+                1. Select Model A path.
+                2. Then enter the desired parameters for the prune.
+                3. Then click the "PRUNE MODEL" button.
 
         Please consider donating to the project if you find it useful,
         so that I can maintain and improve this tool and other projects.
