@@ -28,8 +28,6 @@ If you have any questions or concerns, please don't hesitate to ask for help.
 
 [![0.0.2](media/preview/yt_0.0.2..png)](https://youtu.be/ePZzmMFb8Po "0.0.2")
 
-<img src="media/preview/1_.0.0.2.png">
-
 <img src="media/preview/2_.0.0.2.png">
 
 <img src="media/preview/3_0.0.2.png">
