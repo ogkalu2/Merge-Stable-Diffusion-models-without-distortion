@@ -1,8 +1,9 @@
 <div align="center">
 
   [![](media/svg/patreon.svg)](https://www.patreon.com/distyx)
-  [![](media/svg/supportme.svg)](https://coindrop.to/disty)
-
+  [![](media/svg/buymeacoffee.svg)](https://www.buymeacoffee.com/disty)
+  [![](media/svg/kofi.svg)](https://ko-fi.com/disty)
+  
   To continue to develop i will be happy to get some support.
   
 ## Merge-Stable-Diffusion-models-without-distortion-gui  
@@ -23,9 +24,12 @@ please open an issue.
 
 If you have any questions or concerns, please don't hesitate to ask for help.
 
+### v0.0.2
 
-<img src="media/preview/mrdone.png">
-<img src="media/preview/prune.png">
+[![0.0.2](media/preview/yt_0.0.2..png)](https://youtu.be/ePZzmMFb8Po "0.0.2")
+<img src="media/preview/1_.0.0.2.png">
+<img src="media/preview/2_.0.0.2.png">
+<img src="media/preview/3_.0.0.2.png">
 
 
 [Windows Releases](https://github.com/diStyApps/Merge-Stable-Diffusion-models-without-distortion-gui/releases)
