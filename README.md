@@ -1,9 +1,14 @@
-[![](media/svg/patreon.svg)](https://www.patreon.com/distyx)
-[![](media/svg/supportme.svg)](https://coindrop.to/disty)
-  
-To continue to develop i will be happy to get some support.
+<div align="center">
 
-## Merge-Stable-Diffusion-models-without-distortion-gui
+  [![](media/svg/patreon.svg)](https://www.patreon.com/distyx)
+  [![](media/svg/supportme.svg)](https://coindrop.to/disty)
+
+  To continue to develop i will be happy to get some support.
+  
+## Merge-Stable-Diffusion-models-without-distortion-gui  
+</div>
+
+
 
 I created this simple GUI for this project because of some users requests.
 
@@ -18,11 +23,12 @@ please open an issue.
 
 If you have any questions or concerns, please don't hesitate to ask for help.
 
+
 <img src="media/preview/mrdone.png">
 <img src="media/preview/prune.png">
 
 
-[Windows Releases](https://github.com/diStyApps/Merge-Stable-Diffusion-models-without-distortion-gui)
+[Windows Releases](https://github.com/diStyApps/Merge-Stable-Diffusion-models-without-distortion-gui/releases)
 
 Dev:
 ```
