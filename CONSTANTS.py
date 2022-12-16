@@ -1,0 +1,28 @@
+MODEL_A_INP_KEY = '-model_a_inp-'
+MODEL_B_INP_KEY = '-model_b_inp-'
+MERGED_MODEL_INP_KEY = '-merged_model_inp-'
+MERGE_MODELS_BTN_KEY = '-merge_models_btn-'
+PRUNE_MODEL_BTN_KEY = '-prune_model_btn-'
+USE_FP16_CHKBOX_KEY = '-use_fp16_chkbox-'
+ALPHA_SLDR_INP_KEY = '-alpha_sldr_inp-'
+ALPHA_SLDR_KEY = '-alpha_sldr-'
+ITERATIONS_SPIN_BOX_KEY = '-iterations_spin_box-'
+CONSOLE_ML_KEY = '-console_ml-'
+SELECTED_DEVICE_COMBO_KEY = '-selected_device_combo-'
+PBAR_KEY = 'progress_bar'
+
+MODEL_A_LBL = 'Model A'
+MODEL_B_LBL = 'Model B'
+MERGED_MODEL_LBL = 'Custom Name'
+USE_FP16_LBL = 'Use FP16'
+ALPHA_LBL = 'Alpha:'
+ITERATIONS_LBL = 'Iterations:'
+MERGE_MODELS_LBL = 'Merge Models'
+PRUNE_MODEL_LBL = 'Prune Model'
+MERGING_MODELS_LBL = 'Merging Models...'
+PRUNING_MODEL_LBL = 'Pruning Model...'
+
+FILE_EXT = {("All", "*.ckpt"),}
+DEVICE=['cpu','gpu']
+FONT='Ariel 12'
+MISSING_MODEL_PATH_TXT = '\nError: Missing model path.'
