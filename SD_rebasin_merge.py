@@ -1,6 +1,8 @@
 import argparse
 import torch
 import os
+from pathlib import Path
+from safetensors.torch import load_file, save_file
 
 from weight_matching import sdunet_permutation_spec, weight_matching, apply_permutation
 
@@ -13,16 +15,24 @@ parser.add_argument("--output", type=str, help="Output file name, without extens
 parser.add_argument("--usefp16", type=str, help="Whether to use half precision", default=True, required=False)
 parser.add_argument("--alpha", type=str, help="Ratio of model A to B", default="0.5", required=False)
 parser.add_argument("--iterations", type=str, help="Number of steps to take before reaching alpha", default="10", required=False)
+parser.add_argument("--safetensors", type=str, help="Save as safetensors", default=True, required=False)
 args = parser.parse_args()   
 device = args.device
 
-def flatten_params(model):
-  return model["state_dict"]
+def load_model(path, device):
+    if path.suffix == ".safetensors":
+        return load_file(path, device=device)
+    else:
+        ckpt = torch.load(path, map_location=device)
+        return ckpt["state_dict"] if "state_dict" in ckpt else ckpt
 
-model_a = torch.load(args.model_a, map_location=device)
-model_b = torch.load(args.model_b, map_location=device)
-theta_0 = model_a["state_dict"]
-theta_1 = model_b["state_dict"]
+if args.model_a is None or args.model_b is None:
+    parser.print_help()
+    exit(-1)
+model_a = load_model(Path(args.model_a), device)
+model_b = load_model(Path(args.model_b), device)
+theta_0 = model_a
+theta_1 = model_b
 
 alpha = float(args.alpha)
 iterations = int(args.iterations)
@@ -62,9 +72,9 @@ for x in range(iterations):
     print("FINDING PERMUTATIONS")
 
     # Replace theta_0 with a permutated version using model A and B    
-    first_permutation, y = weight_matching(permutation_spec, flatten_params(model_a), theta_0, usefp16=args.usefp16)
+    first_permutation, y = weight_matching(permutation_spec, model_a, theta_0, usefp16=args.usefp16)
     theta_0 = apply_permutation(permutation_spec, first_permutation, theta_0)
-    second_permutation, z = weight_matching(permutation_spec, flatten_params(model_b), theta_0, usefp16=args.usefp16)
+    second_permutation, z = weight_matching(permutation_spec, model_b, theta_0, usefp16=args.usefp16)
     theta_3= apply_permutation(permutation_spec, second_permutation, theta_0)
 
     new_alpha = torch.nn.functional.normalize(torch.sigmoid(torch.Tensor([y, z])), p=1, dim=0).tolist()[0]
@@ -74,7 +84,8 @@ for x in range(iterations):
     for key in special_keys:
         theta_0[key] = (1 - new_alpha) * (theta_0[key]) + (new_alpha) * (theta_3[key])
 
-output_file = f'{args.output}.ckpt'
+ext = "ckpt" if not args.safetensors else "safetensors"
+output_file = f'{args.output}.{ext}'
 
 # check if output file already exists, ask to overwrite
 if os.path.isfile(output_file):
@@ -91,8 +102,11 @@ if os.path.isfile(output_file):
 
 print("\nSaving...")
 
-torch.save({
-        "state_dict": theta_0
-            }, output_file)
-
-print("Done!")
+try:
+    if ext == "safetensors":
+        save_file(theta_0, output_file, metadata={"format":"pt"})
+    else:
+        torch.save({"state_dict": theta_0}, output_file)
+    print("Done!")
+except Exception as e:
+    print(f"ERROR: Couldn't save {output_file} - {e}")
