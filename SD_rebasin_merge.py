@@ -16,6 +16,7 @@ parser.add_argument("--usefp16", type=str, help="Whether to use half precision",
 parser.add_argument("--alpha", type=str, help="Ratio of model A to B", default="0.5", required=False)
 parser.add_argument("--iterations", type=str, help="Number of steps to take before reaching alpha", default="10", required=False)
 parser.add_argument("--safetensors", type=str, help="Save as safetensors", default=True, required=False)
+parser.add_argument("--prune", help="Pruning before merge", action='store_true', default=False, required=False)
 args = parser.parse_args()   
 device = args.device
 
@@ -26,11 +27,23 @@ def load_model(path, device):
         ckpt = torch.load(path, map_location=device)
         return ckpt["state_dict"] if "state_dict" in ckpt else ckpt
 
+def prune(model):
+    keys = list(model.keys())
+    for k in keys:
+        if "diffusion_model." not in k and "first_stage_model." not in k and "cond_stage_model." not in k:
+            model.pop(k, None)
+    return model
+
 if args.model_a is None or args.model_b is None:
     parser.print_help()
     exit(-1)
 model_a = load_model(Path(args.model_a), device)
 model_b = load_model(Path(args.model_b), device)
+
+if args.prune:
+    model_a = prune(model_a)
+    model_b = prune(model_b)
+
 theta_0 = model_a
 theta_1 = model_b
 
