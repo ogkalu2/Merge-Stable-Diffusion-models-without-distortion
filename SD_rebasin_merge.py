@@ -62,7 +62,7 @@ for x in range(iterations):
     print(f"new alpha = {new_alpha}\n")
 
 
-    theta_0 = {key: (1 - (new_alpha)) * theta_0[key] + (new_alpha) * value for key, value in theta_1.items() if "model" in key and key in theta_1}
+    theta_0 = {key: (1 - (new_alpha)) * theta_0[key] + (new_alpha) * value for key, value in theta_1.items() if "model" in key and key in theta_0}
 
     if x == 0:
         for key in theta_1.keys():
