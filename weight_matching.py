@@ -781,7 +781,7 @@ def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=No
 
 def apply_permutation(ps: PermutationSpec, perm, params):
   """Apply a `perm` to `params`."""
-  return {k: get_permuted_param(ps, perm, k, params) for k in params.keys()}
+  return {k: get_permuted_param(ps, perm, k, params) for k in params.keys() if "model_" not in k}
 
 def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=1, init_perm=None, usefp16=False):
   """Find a permutation of `params_b` to make them match `params_a`."""
