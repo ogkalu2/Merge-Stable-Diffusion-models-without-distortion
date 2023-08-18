@@ -117,6 +117,8 @@ if os.path.isfile(output_file):
 
 print("\nSaving...")
 
+theta_0['cond_stage_model.transformer.text_model.embeddings.position_ids'] = torch.tensor([list(range(77))], dtype=torch.int64, device="cpu")
+
 try:
     if ext == "safetensors":
         save_file(theta_0, output_file, metadata={"format":"pt"})
