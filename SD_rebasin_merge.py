@@ -61,6 +61,8 @@ if args.usefp16:
 else:
     print("Using full precision")
 
+checkpoint_dict_skip_on_merge = ["cond_stage_model.transformer.text_model.embeddings.position_ids"]
+
 for x in range(iterations):
     print(f"""
     ---------------------
@@ -76,8 +78,14 @@ for x in range(iterations):
         new_alpha = step
     print(f"new alpha = {new_alpha}\n")
 
-
-    theta_0 = {key: (1 - (new_alpha)) * theta_0[key] + (new_alpha) * value for key, value in theta_1.items() if "model" in key and key in theta_0}
+    # Add the models together in specific ratio to reach final ratio
+    for key in theta_0.keys():
+        if "model_" in key:
+            continue
+        if key in checkpoint_dict_skip_on_merge:
+            continue
+        if "model" in key and key in theta_1:
+            theta_0[key] = (1 - new_alpha) * theta_0[key] + new_alpha * theta_1[key]
 
     if x == 0:
         for key in theta_1.keys():
