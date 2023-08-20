@@ -18,6 +18,7 @@ parser.add_argument("--alpha", type=str, help="Ratio of model A to B", default="
 parser.add_argument("--iterations", type=str, help="Number of steps to take before reaching alpha", default="10", required=False)
 parser.add_argument("--safetensors", type=str, help="Save as safetensors", default=True, required=False)
 parser.add_argument("--prune", help="Pruning before merge", action='store_true', default=False, required=False)
+parser.add_argument("--fixclip", help="Force to fix clip to int64", action='store_true', default=False, required=False)
 parser.set_defaults(usefp16=True)
 args = parser.parse_args()   
 device = args.device
@@ -107,6 +108,22 @@ for x in range(iterations):
     for key in special_keys:
         theta_0[key] = (1 - new_alpha) * (theta_0[key]) + (new_alpha) * (theta_3[key])
 
+# fix/check bad clip
+position_id_key = 'cond_stage_model.transformer.text_model.embeddings.position_ids'
+if position_id_key in theta_0:
+    correct = torch.tensor([list(range(77))], dtype=torch.int64, device="cpu")
+    current = theta_0[position_id_key].to(torch.int64)
+    broken = correct.ne(current)
+    broken = [i for i in range(77) if broken[0][i]]
+    if len(broken) != 0:
+        if args.fixclip:
+            theta_0[position_id_key] = correct
+            print(f"Fixed broken clip\n{broken}")
+        else:
+            print(f"Broken clip!\n{broken}")
+    else:
+        print("Clip is fine")
+
 ext = "ckpt" if not args.safetensors else "safetensors"
 output_file = f'{args.output}.{ext}'
 
@@ -124,9 +141,6 @@ if os.path.isfile(output_file):
             print("Please enter y or n")
 
 print("\nSaving...")
-
-if 'cond_stage_model.transformer.text_model.embeddings.position_ids' in theta_0:
-    theta_0['cond_stage_model.transformer.text_model.embeddings.position_ids'] = torch.tensor([list(range(77))], dtype=torch.int64, device="cpu")
 
 try:
     if ext == "safetensors":
