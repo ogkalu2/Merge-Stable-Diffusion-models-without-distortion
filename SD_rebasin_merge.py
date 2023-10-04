@@ -96,9 +96,9 @@ for x in range(iterations):
     print("FINDING PERMUTATIONS")
 
     # Replace theta_0 with a permutated version using model A and B    
-    first_permutation, y = weight_matching(permutation_spec, model_a, theta_0, usefp16=args.usefp16)
+    first_permutation, y = weight_matching(permutation_spec, model_a, theta_0, usefp16=args.usefp16, device=device)
     theta_0 = apply_permutation(permutation_spec, first_permutation, theta_0)
-    second_permutation, z = weight_matching(permutation_spec, model_b, theta_0, usefp16=args.usefp16)
+    second_permutation, z = weight_matching(permutation_spec, model_b, theta_0, usefp16=args.usefp16, device=device)
     theta_3= apply_permutation(permutation_spec, second_permutation, theta_0)
 
     new_alpha = torch.nn.functional.normalize(torch.sigmoid(torch.Tensor([y, z])), p=1, dim=0).tolist()[0]
