@@ -22,7 +22,11 @@ parser.add_argument("--fixclip", help="Force to fix clip to int64", action='stor
 parser.set_defaults(usefp16=True)
 args = parser.parse_args()   
 device = args.device
+usefp16 = args.usefp16 
 
+if device = "cpu":
+    usefp16 = False
+    
 def load_model(path, device):
     if path.suffix == ".safetensors":
         return load_file(path, device=device)
@@ -96,9 +100,9 @@ for x in range(iterations):
     print("FINDING PERMUTATIONS")
 
     # Replace theta_0 with a permutated version using model A and B    
-    first_permutation, y = weight_matching(permutation_spec, model_a, theta_0, usefp16=args.usefp16, device=device)
+    first_permutation, y = weight_matching(permutation_spec, model_a, theta_0, usefp16=usefp16, device=device)
     theta_0 = apply_permutation(permutation_spec, first_permutation, theta_0)
-    second_permutation, z = weight_matching(permutation_spec, model_b, theta_0, usefp16=args.usefp16, device=device)
+    second_permutation, z = weight_matching(permutation_spec, model_b, theta_0, usefp16=usefp16, device=device)
     theta_3= apply_permutation(permutation_spec, second_permutation, theta_0)
 
     new_alpha = torch.nn.functional.normalize(torch.sigmoid(torch.Tensor([y, z])), p=1, dim=0).tolist()[0]
