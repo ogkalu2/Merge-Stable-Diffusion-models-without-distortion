@@ -783,15 +783,14 @@ def apply_permutation(ps: PermutationSpec, perm, params):
   """Apply a `perm` to `params`."""
   return {k: get_permuted_param(ps, perm, k, params) for k in params.keys() if "model_" not in k}
 
-def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=1, init_perm=None, usefp16=False):
+def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers, max_iter=3, init_perm=None, usefp16=False, device="cuda"):
   """Find a permutation of `params_b` to make them match `params_a`."""
-  special_layers = ["P_bg358", "P_bg324", "P_bg337"]
   perm_sizes = {p: params_a[axes[0][0]].shape[axes[0][1]] for p, axes in ps.perm_to_axes.items()}
   perm = dict()
   perm = {p: torch.arange(n) for p, n in perm_sizes.items()} if init_perm is None else init_perm
-  perm_names = list(perm.keys())
   sum = 0
   number = 0
+
   if usefp16:
     for iteration in range(max_iter):
       progress = False
@@ -800,12 +799,12 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=1, init_pe
         p = p_ix
         if p in special_layers:
           n = perm_sizes[p]
-          A = torch.zeros((n, n), dtype=torch.float16).to("cuda")
+          A = torch.zeros((n, n), dtype=torch.float16).to(device)
           for wk, axis in ps.perm_to_axes[p]:
               w_a = params_a[wk]
               w_b = get_permuted_param(ps, perm, wk, params_b, except_axis=axis)
-              w_a = torch.moveaxis(w_a, axis, 0).reshape((n, -1)).to("cuda")
-              w_b = torch.moveaxis(w_b, axis, 0).reshape((n, -1)).T.to("cuda")
+              w_a = torch.moveaxis(w_a, axis, 0).reshape((n, -1)).to(device)
+              w_b = torch.moveaxis(w_b, axis, 0).reshape((n, -1)).T.to(device)
               A += torch.matmul(w_a.half(), w_b.half())
 
           A = A.cpu()
@@ -837,32 +836,34 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, max_iter=1, init_pe
   else:
     for iteration in range(max_iter):
       progress = False
-      for p_ix in torch.randperm(len(perm_names)):
-        p = perm_names[p_ix]
-        n = perm_sizes[p]
-        A = torch.zeros((n, n))
-        for wk, axis in ps.perm_to_axes[p]:
+      shuffle(special_layers)
+      for p_ix in special_layers:
+        p = p_ix
+        if p in special_layers:
+          n = perm_sizes[p]
+          A = torch.zeros((n, n), dtype=torch.float32).to(device)
+          for wk, axis in ps.perm_to_axes[p]:
             w_a = params_a[wk]
             w_b = get_permuted_param(ps, perm, wk, params_b, except_axis=axis).half()
-            w_a = torch.moveaxis(w_a, axis, 0).reshape((n, -1)).to("cuda")
-            w_b = torch.moveaxis(w_b, axis, 0).reshape((n, -1)).T.to("cuda")
-            A += torch.matmul(w_a, w_b).cpu()
+            w_a = torch.moveaxis(w_a, axis, 0).reshape((n, -1)).to(device)
+            w_b = torch.moveaxis(w_b, axis, 0).reshape((n, -1)).T.to(device)
+            A += torch.matmul(w_a.float(), w_b.float()).cpu()
 
-        ri, ci = linear_sum_assignment(A.detach().numpy())
+          ri, ci = linear_sum_assignment(A.detach().numpy())
 
-        assert (torch.tensor(ri) == torch.arange(len(ri))).all()
+          assert (torch.tensor(ri) == torch.arange(len(ri))).all()
         
-        oldL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[perm[p].long()]))
-        newL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[ci, :]))
+          oldL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[perm[p].long()]).float())
+          newL = torch.vdot(torch.flatten(A), torch.flatten(torch.eye(n)[ci, :]).float())
 
-        if newL - oldL != 0:
+          if newL - oldL != 0:
             sum += abs((newL-oldL).item())
             number += 1
             print(f"{p}: {newL - oldL}")
 
-        progress = progress or newL > oldL + 1e-12
+          progress = progress or newL > oldL + 1e-12
 
-        perm[p] = torch.Tensor(ci)
+          perm[p] = torch.Tensor(ci)
         
       if not progress:
         break
