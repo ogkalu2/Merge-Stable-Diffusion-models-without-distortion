@@ -24,7 +24,7 @@ args = parser.parse_args()
 device = args.device
 usefp16 = args.usefp16 
 
-if device = "cpu":
+if device == "cpu":
     usefp16 = False
     
 def load_model(path, device):
