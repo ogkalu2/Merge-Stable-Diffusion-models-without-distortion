@@ -384,7 +384,7 @@ def sdunet_permutation_spec() -> PermutationSpec:
      **dense("model.diffusion_model.output_blocks.10.1.transformer_blocks.0.attn1.to_k", "P_bg292", "P_bg293", bias=False),
      **dense("model.diffusion_model.output_blocks.10.1.transformer_blocks.0.attn1.to_v", "P_bg292", "P_bg293", bias=False),
      **dense("model.diffusion_model.output_blocks.10.1.transformer_blocks.0.attn1.to_out.0", "P_bg292","P_bg293", bias=True),
-     **dense("model.diffusion_model.output_blocks.10.1.transformer_blocks.0.ff.net.0.proj", "P_b294","P_bg295", bias=True),
+     **dense("model.diffusion_model.output_blocks.10.1.transformer_blocks.0.ff.net.0.proj", "P_bg294","P_bg295", bias=True),
      **dense("model.diffusion_model.output_blocks.10.1.transformer_blocks.0.ff.net.2", "P_bg296","P_bg297", bias=True),
      **dense("model.diffusion_model.output_blocks.10.1.transformer_blocks.0.attn2.to_q", "P_bg298", "P_bg299", bias=False),
      **dense("model.diffusion_model.output_blocks.10.1.transformer_blocks.0.attn2.to_k", "P_bg300", "P_bg301", bias=False),
