@@ -841,15 +841,15 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers, dev
         p = p_ix
         if p in special_layers:
           n = perm_sizes[p]
-          A = torch.zeros((n, n), dtype=torch.float32).to(device)
+          A = torch.zeros((n, n), dtype=torch.float32).to(device="cpu")
           for wk, axis in ps.perm_to_axes[p]:
             w_a = params_a[wk]
-            w_b = get_permuted_param(ps, perm, wk, params_b, except_axis=axis).half()
+            w_b = get_permuted_param(ps, perm, wk, params_b, except_axis=axis)
             w_a = torch.moveaxis(w_a, axis, 0).reshape((n, -1)).to(device)
             w_b = torch.moveaxis(w_b, axis, 0).reshape((n, -1)).T.to(device)
             A += torch.matmul(w_a.float(), w_b.float()).cpu()
 
-          ri, ci = linear_sum_assignment(A.detach().numpy())
+          ri, ci = linear_sum_assignment(A.detach().numpy(), maximize=True)
 
           assert (torch.tensor(ri) == torch.arange(len(ri))).all()
         
