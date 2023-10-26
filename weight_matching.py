@@ -783,11 +783,12 @@ def apply_permutation(ps: PermutationSpec, perm, params):
   """Apply a `perm` to `params`."""
   return {k: get_permuted_param(ps, perm, k, params) for k in params.keys() if "model_" not in k}
 
-def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers, device, max_iter=3, init_perm=None, usefp16=False):
+def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers=None, device="cpu", max_iter=3, init_perm=None, usefp16=False):
   """Find a permutation of `params_b` to make them match `params_a`."""
-  perm_sizes = {p: params_a[axes[0][0]].shape[axes[0][1]] for p, axes in ps.perm_to_axes.items()}
+  perm_sizes = {p: params_a[axes[0][0]].shape[axes[0][1]] for p, axes in ps.perm_to_axes.items() if axes[0][0] in params_b}
   perm = dict()
   perm = {p: torch.arange(n) for p, n in perm_sizes.items()} if init_perm is None else init_perm
+  special_layers = special_layers if special_layers and len(special_layers) > 0 else sorted(list(perm.keys()))
   sum = 0
   number = 0
 
