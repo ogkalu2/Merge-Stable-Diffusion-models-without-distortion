@@ -1,4 +1,4 @@
-from weight_matching import PermutationSpec, permutation_spec_from_axes_to_perm
+from PermSpec_Base import PermutationSpec, permutation_spec_from_axes_to_perm
 
 def sdunet_permutation_spec() -> PermutationSpec:
   conv = lambda name, p_in, p_out: {f"{name}.weight": (p_out, p_in,), f"{name}.bias": (p_out,) }

@@ -1,4 +1,4 @@
-from weight_matching import PermutationSpec, permutation_spec_from_axes_to_perm
+from PermSpec_Base import PermutationSpec, permutation_spec_from_axes_to_perm
 
 def mlp_permutation_spec(num_hidden_layers: int) -> PermutationSpec:
   """We assume that one permutation cannot appear in two axes of the same weight array."""

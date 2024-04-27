@@ -1,28 +1,14 @@
-from collections import defaultdict
-from re import L
-from typing import NamedTuple
 import torch
 from scipy.optimize import linear_sum_assignment
 import time
-from random import shuffle
-
-rngmix = lambda rng, x: random.fold_in(rng, hash(x))
-
-class PermutationSpec(NamedTuple):
-  perm_to_axes: dict
-  axes_to_perm: dict
-
-def permutation_spec_from_axes_to_perm(axes_to_perm: dict) -> PermutationSpec:
-  perm_to_axes = defaultdict(list)
-  for wk, axis_perms in axes_to_perm.items():
-    for axis, perm in enumerate(axis_perms):
-      if perm is not None:
-        perm_to_axes[perm].append((wk, axis))
-  return PermutationSpec(perm_to_axes=dict(perm_to_axes), axes_to_perm=axes_to_perm)
+import random
+from merge_PermSpec_ResNet import mlp_permutation_spec
+from PermSpec_Base import PermutationSpec
 
 def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=None):
   """Get parameter `k` from `params`, with the permutations applied."""
   w = params[k]
+  print(k)
   
   try:
     for axis, p in enumerate(ps.axes_to_perm[k]):
@@ -32,11 +18,13 @@ def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=No
 
       # None indicates that there is no permutation relevant to that axis.
       if p is not None:
+        #print(w.shape)
+        #print(perm[p].shape)
         w = torch.index_select(w, axis, perm[p].int())
   except:   
     #print("error in layer {}".format(k))
     #rint("")
-    print(k)
+    #print(k)
     #print(ps.axes_to_perm.keys())
     raise Exception("error")
     #print(axis)
@@ -64,7 +52,7 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers=None
   if usefp16:
     for iteration in range(max_iter):
       progress = False
-      shuffle(special_layers)
+      random.shuffle(special_layers)
       for p_ix in special_layers:
         p = p_ix
         if p in special_layers:
@@ -106,7 +94,7 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers=None
   else:
     for iteration in range(max_iter):
       progress = False
-      shuffle(special_layers)
+      random.shuffle(special_layers)
       for p_ix in special_layers:
         p = p_ix
         if p in special_layers:
@@ -148,7 +136,7 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers=None
 def test_weight_matching():
   """If we just have a single hidden layer then it should converge after just one step."""
   ps = mlp_permutation_spec(num_hidden_layers=3)
-  print(ps.axes_to_perm)
+  #print(ps.axes_to_perm)
   rng = torch.Generator()
   rng.manual_seed(13)
   num_hidden = 10
@@ -158,6 +146,8 @@ def test_weight_matching():
       "layer1.weight": (num_hidden, 3),
       "layer1.bias": (3, )
   }
+
+  rngmix = lambda rng, x: random.fold_in(rng, hash(x))
 
   params_a = {k: random.normal(rngmix(rng, f"a-{k}"), shape) for k, shape in shapes.items()}
   params_b = {k: random.normal(rngmix(rng, f"b-{k}"), shape) for k, shape in shapes.items()}

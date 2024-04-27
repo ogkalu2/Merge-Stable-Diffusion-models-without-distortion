@@ -61,7 +61,6 @@ alpha = float(args.alpha)
 iterations = int(args.iterations)
 step = alpha/iterations
 
-# TODO: Detect SDXL / SD1.5 / SD2.1
 modeltype_a = "sdxl" if "conditioner.embedders.1.model.transformer.resblocks.0.attn.in_proj_bias" in model_a else "sd1"
 modeltype_b = "sdxl" if "conditioner.embedders.1.model.transformer.resblocks.0.attn.in_proj_bias" in model_b else "sd1"
 
