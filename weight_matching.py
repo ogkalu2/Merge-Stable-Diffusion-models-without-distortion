@@ -23,14 +23,26 @@ def permutation_spec_from_axes_to_perm(axes_to_perm: dict) -> PermutationSpec:
 def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=None):
   """Get parameter `k` from `params`, with the permutations applied."""
   w = params[k]
-  for axis, p in enumerate(ps.axes_to_perm[k]):
-    # Skip the axis we're trying to permute.
-    if axis == except_axis:
-      continue
+  
+  try:
+    for axis, p in enumerate(ps.axes_to_perm[k]):
+      # Skip the axis we're trying to permute.
+      if axis == except_axis:
+        continue
 
-    # None indicates that there is no permutation relevant to that axis.
-    if p is not None:
-      w = torch.index_select(w, axis, perm[p].int())
+      # None indicates that there is no permutation relevant to that axis.
+      if p is not None:
+        w = torch.index_select(w, axis, perm[p].int())
+  except:   
+    #print("error in layer {}".format(k))
+    #rint("")
+    print(k)
+    #print(ps.axes_to_perm.keys())
+    raise Exception("error")
+    #print(axis)
+    #print(p)
+    #print(perm[p].int())
+    #raise Exception("RuntimeError: mat1 and mat2 shapes cannot be multiplied (5120x960 and 320x5120)")
 
   return w
 

@@ -104,7 +104,10 @@ for x in range(iterations):
 
     # Add the models together in specific ratio to reach final ratio
     for key in theta_0.keys():
+        # It does not fully describe SDXL
         if "model_" in key:
+            continue
+        if "conditioner.embedders.1.model" in key:
             continue
         if key in checkpoint_dict_skip_on_merge:
             continue
