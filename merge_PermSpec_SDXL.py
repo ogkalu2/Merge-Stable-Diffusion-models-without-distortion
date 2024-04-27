@@ -1,4 +1,5 @@
 # Ref: https://github.com/vladmandic/automatic/blob/dev/modules/merging/merge_PermSpec_SDXL.py
+# Diff: https://www.diffchecker.com/WZKq6YiP/
 # Tldr: Awful. So many layers are incorrect and missing!
 
 from PermSpec_Base import PermutationSpec, permutation_spec_from_axes_to_perm

@@ -4,6 +4,7 @@ import time
 import random
 from merge_PermSpec_ResNet import mlp_permutation_spec
 from PermSpec_Base import PermutationSpec
+from tqdm import tqdm
 
 def get_permuted_param(ps: PermutationSpec, perm, k: str, params, except_axis=None):
   """Get parameter `k` from `params`, with the permutations applied."""
@@ -29,6 +30,8 @@ def apply_permutation(ps: PermutationSpec, perm, params):
 
 def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers=None, device="cpu", max_iter=3, init_perm=None, usefp16=False):
   """Find a permutation of `params_b` to make them match `params_a`."""
+  # tqdm layer will start from 1.
+  
   perm_sizes = {p: params_a[axes[0][0]].shape[axes[0][1]] for p, axes in ps.perm_to_axes.items() if axes[0][0] in params_b}
   #print(perm_sizes)
   perm = dict()
@@ -39,10 +42,10 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers=None
   number = 0
 
   if usefp16:
-    for iteration in range(max_iter):
+    for _ in tqdm(range(max_iter), desc="weight_matching in fp16", position=1):
       progress = False
       random.shuffle(special_layers)
-      for p_ix in special_layers:
+      for p_ix in tqdm(special_layers, desc="weight_matching for special_layers", position=2):
         p = p_ix
         if p in special_layers:
           n = perm_sizes[p]
@@ -65,7 +68,7 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers=None
           if newL - oldL != 0:
             sum += abs((newL-oldL).item())
             number += 1
-            print(f"{p}: {newL - oldL}")
+            #print(f"{p}: {newL - oldL}")
 
           progress = progress or newL > oldL + 1e-12
 
@@ -81,10 +84,10 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers=None
     return (perm, average)
 
   else:
-    for iteration in range(max_iter):
+    for _ in tqdm(range(max_iter), desc="weight_matching in fp32", position=1):
       progress = False
       random.shuffle(special_layers)
-      for p_ix in special_layers:
+      for p_ix in tqdm(special_layers, desc="weight_matching for special_layers", position=2):
         p = p_ix
         if p in special_layers:
           n = perm_sizes[p]
