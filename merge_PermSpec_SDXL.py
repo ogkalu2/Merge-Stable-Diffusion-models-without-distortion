@@ -49,6 +49,24 @@ def sdxl_permutation_spec() -> PermutationSpec:
         **conv(f"{name}.out_layers.3", f"P_{name}_inner4", p_out),
     }
 
+    # Text Encoder blocks
+    easyblock2 = lambda name, p: {
+        **norm(f"{name}.norm1", p),
+        **conv(f"{name}.conv1", p, f"P_{name}_inner"),
+        **norm(f"{name}.norm2", f"P_{name}_inner"),
+        **conv(f"{name}.conv2", f"P_{name}_inner", p),
+    }
+
+    # This is for blocks that use a residual connection, but change the number of channels via a Conv.
+    shortcutblock = lambda name, p_in, p_out: {
+        **norm(f"{name}.norm1", p_in),
+        **conv(f"{name}.conv1", p_in, f"P_{name}_inner"),
+        **norm(f"{name}.norm2", f"P_{name}_inner"),
+        **conv(f"{name}.conv2", f"P_{name}_inner", p_out),
+        **conv(f"{name}.nin_shortcut", p_in, p_out),
+        **norm(f"{name}.nin_shortcut", p_out),
+    }
+
     return permutation_spec_from_axes_to_perm(
         {
             # Skipped Layers
@@ -1049,6 +1067,76 @@ def sdxl_permutation_spec() -> PermutationSpec:
             **conv("model.diffusion_model.output_blocks.8.0.skip_connection", "P_bg1164", "P_bg1165"),
             **dense("model.diffusion_model.time_embed.0", "P_bg1166", "P_bg1167", bias=True),
             **dense("model.diffusion_model.time_embed.2", "P_bg1168", "P_bg1169", bias=True),
+
+            #VAE              
+            #encoder down
+            **conv("first_stage_model.encoder.conv_in", "P_bg2327", "P_bg2328"),  
+            **easyblock2("first_stage_model.encoder.down.0.block.0", "P_bg2328"),
+            **easyblock2("first_stage_model.encoder.down.0.block.1", "P_bg2328"),
+            **conv("first_stage_model.encoder.down.0.downsample.conv", "P_bg2328", "P_bg2329"),
+            
+            **shortcutblock("first_stage_model.encoder.down.1.block.0", "P_bg2330","P_bg2331"),
+            **easyblock2("first_stage_model.encoder.down.1.block.1", "P_bg2331"),
+            **conv("first_stage_model.encoder.down.1.downsample.conv", "P_bg2331", "P_bg2332"),
+            
+            **shortcutblock("first_stage_model.encoder.down.2.block.0", "P_bg2332", "P_bg2333"),
+            **easyblock2("first_stage_model.encoder.down.2.block.1", "P_bg2333"),
+            **conv("first_stage_model.encoder.down.2.downsample.conv", "P_bg2333", "P_bg2334"),
+
+            **easyblock2("first_stage_model.encoder.down.3.block.0", "P_bg2334"),
+            **easyblock2("first_stage_model.encoder.down.3.block.1", "P_bg2334"),
+
+            #encoder mid-block
+            **easyblock2("first_stage_model.encoder.mid.block_1", "P_bg2334"),
+
+            **norm("first_stage_model.encoder.mid.attn_1.norm", "P_bg2334"),
+            **conv("first_stage_model.encoder.mid.attn_1.q", "P_bg2334", "P_bg2335"),
+            **conv("first_stage_model.encoder.mid.attn_1.k", "P_bg2334", "P_bg2335"),
+            **conv("first_stage_model.encoder.mid.attn_1.v", "P_bg2334", "P_bg2335"),
+            **conv("first_stage_model.encoder.mid.attn_1.proj_out", "P_bg2335", "P_bg2336"),    
+
+            **easyblock2("first_stage_model.encoder.mid.block_2", "P_bg2336"),
+
+            **norm("first_stage_model.encoder.norm_out", "P_bg2337"),
+            **conv("first_stage_model.encoder.conv_out", "P_bg2338", "P_bg2339"),
+
+            **conv("first_stage_model.decoder.conv_in", "P_bg2340", "P_bg2341"),
+            
+            #decoder mid-block
+            **easyblock2("first_stage_model.decoder.mid.block_1", "P_bg2342"),
+            **norm("first_stage_model.decoder.mid.attn_1.norm", "P_bg2342"),
+            **conv("first_stage_model.decoder.mid.attn_1.q", "P_bg2342", "P_bg2343"),
+            **conv("first_stage_model.decoder.mid.attn_1.k", "P_bg2342", "P_bg2343"),
+            **conv("first_stage_model.decoder.mid.attn_1.v", "P_bg2342", "P_bg2343"),
+            **conv("first_stage_model.decoder.mid.attn_1.proj_out", "P_bg2343", "P_bg2344"),
+
+            **easyblock2("first_stage_model.decoder.mid.block_2", "P_bg2345"),
+            
+            #decoder up
+            **shortcutblock("first_stage_model.decoder.up.0.block.0", "P_bg2346","P_bg2347"),
+            **easyblock2("first_stage_model.decoder.up.0.block.1", "P_bg2348"),
+            **easyblock2("first_stage_model.decoder.up.0.block.2", "P_bg2349"),
+
+            **shortcutblock("first_stage_model.decoder.up.1.block.0", "P_bg2350","P_bg2351"),    
+            **easyblock2("first_stage_model.decoder.up.1.block.1", "P_bg2352"),
+            **easyblock2("first_stage_model.decoder.up.1.block.2", "P_bg2353"),
+            **conv("first_stage_model.decoder.up.1.upsample.conv", "P_bg2353", "P_bg2354"),
+
+            **easyblock2("first_stage_model.decoder.up.2.block.0", "P_bg2355"),
+            **easyblock2("first_stage_model.decoder.up.2.block.1", "P_bg2355"),
+            **easyblock2("first_stage_model.decoder.up.2.block.2", "P_bg2355"),
+            **conv("first_stage_model.decoder.up.2.upsample.conv", "P_bg2355", "P_bg2356"),
+
+            **easyblock2("first_stage_model.decoder.up.3.block.0", "P_bg2356"),
+            **easyblock2("first_stage_model.decoder.up.3.block.1", "P_bg2356"),
+            **easyblock2("first_stage_model.decoder.up.3.block.2", "P_bg2356"),
+            **conv("first_stage_model.decoder.up.3.upsample.conv", "P_bg2356", "P_bg2357"),
+
+            **norm("first_stage_model.decoder.norm_out", "P_bg2358"),
+            **conv("first_stage_model.decoder.conv_out", "P_bg2359", "P_bg2360"),
+            **conv("first_stage_model.quant_conv", "P_bg2361", "P_bg2362"),
+            **conv("first_stage_model.post_quant_conv", "P_bg2363", "P_bg2364"),
+
             # Text Encoder 1
             # 1:1 to SD1.5
             **skip("conditioner.embedders.0.transformer.text_model.embeddings.position_ids", None, None),

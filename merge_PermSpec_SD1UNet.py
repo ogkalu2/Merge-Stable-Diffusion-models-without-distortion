@@ -1,5 +1,7 @@
 from PermSpec_Base import PermutationSpec, permutation_spec_from_axes_to_perm
 
+# Comment from DammK: This is the complete spec. It is not the UNET only! CLIP / VAE / UNET all are requried!
+
 def sdunet_permutation_spec() -> PermutationSpec:
   conv = lambda name, p_in, p_out: {f"{name}.weight": (p_out, p_in,), f"{name}.bias": (p_out,) }
   norm = lambda name, p: {f"{name}.weight": (p, ), f"{name}.bias": (p, )}
@@ -384,7 +386,7 @@ def sdunet_permutation_spec() -> PermutationSpec:
      **norm("model.diffusion_model.out.0", "P_bg324"),
      **conv("model.diffusion_model.out.2", "P_bg325", "P_bg326"),
 
-     #Text Encoder
+     #VAE
      #encoder down
      **conv("first_stage_model.encoder.conv_in", "P_bg327", "P_bg328"),  
      **easyblock2("first_stage_model.encoder.down.0.block.0", "P_bg328"),
