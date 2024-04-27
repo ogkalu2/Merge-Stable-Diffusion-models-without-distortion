@@ -4,8 +4,10 @@ import os
 from pathlib import Path
 from safetensors.torch import load_file, save_file
 
-from weight_matching import sdunet_permutation_spec, weight_matching, apply_permutation
-
+from weight_matching import weight_matching, apply_permutation
+from merge_PermSpec_SDXL import sdxl_permutation_spec
+from merge_PermSpec_SD1UNet import sdunet_permutation_spec
+#from merge_PermSpec_ResNet import vgg16_permutation_spec, resnet50_permutation_spec, resnet20_permutation_spec, cnn_permutation_spec, mlp_permutation_spec
 
 parser = argparse.ArgumentParser(description= "Merge two stable diffusion models with git re-basin")
 parser.add_argument("--model_a", type=str, help="Path to model a")
@@ -58,9 +60,25 @@ theta_1 = model_b
 alpha = float(args.alpha)
 iterations = int(args.iterations)
 step = alpha/iterations
-permutation_spec = sdunet_permutation_spec()
-special_keys = ["first_stage_model.decoder.norm_out.weight", "first_stage_model.decoder.norm_out.bias", "first_stage_model.encoder.norm_out.weight", 
-"first_stage_model.encoder.norm_out.bias", "model.diffusion_model.out.0.weight", "model.diffusion_model.out.0.bias"]
+
+# TODO: Detect SDXL / SD1.5 / SD2.1
+modeltype_a = "sdxl" if "conditioner.embedders.1.model.transformer.resblocks.0.attn.in_proj_bias" in model_a else "sd1"
+modeltype_b = "sdxl" if "conditioner.embedders.1.model.transformer.resblocks.0.attn.in_proj_bias" in model_b else "sd1"
+
+print("Detected model type: " + modeltype_a)
+if modeltype_a != modeltype_b:
+    raise Exception("Model type mismatch!")
+
+permutation_spec = sdxl_permutation_spec() if modeltype_a == "sdxl" else sdunet_permutation_spec()
+
+special_keys = [
+    "first_stage_model.decoder.norm_out.weight", 
+    "first_stage_model.decoder.norm_out.bias", 
+    "first_stage_model.encoder.norm_out.weight", 
+    "first_stage_model.encoder.norm_out.bias", 
+    "model.diffusion_model.out.0.weight", 
+    "model.diffusion_model.out.0.bias"
+]
 
 if args.usefp16:
     print("Using half precision")
@@ -81,7 +99,7 @@ for x in range(iterations):
     if x > 0:
         new_alpha = 1 - (1 - step*(1+x)) / (1 - step*(x))
     else:
-        new_alpha = step
+         new_alpha = step
     print(f"new alpha = {new_alpha}\n")
 
     # Add the models together in specific ratio to reach final ratio
