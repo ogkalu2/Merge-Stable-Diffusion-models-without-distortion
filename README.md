@@ -11,16 +11,12 @@ If not in the same directory then
 pathofmodela.ckpt and pathofmodelb.ckpt instead
 
 ### Notes for SDXL by DammK ###
-
-- This is a "just make it work" version with minimal option support. 
-- Tested in A1111 WebUI 1.9.3 and [sd-mecha](https://github.com/ljleb/sd-mecha) ~~obviously I want to move the codes there.~~
-- [The only SDXL code only permutate for a few layers.](https://github.com/vladmandic/automatic/blob/dev/modules/merging/merge_rebasin.py)
-- [However permutation spec is present as in PR.](https://github.com/ogkalu2/Merge-Stable-Diffusion-models-without-distortion/issues/44). [OK, it turns out being entirely different.](https://www.diffchecker.com/WZKq6YiP/) I have posted a [text file](./docs/CLIP_G.txt) describing the **tensor size** of each layer. This implementation requires matching of tensor size.
-- *Somehow no follow up.* [For example this PR.](https://github.com/wkpark/sd-webui-model-mixer/issues/96)
-- Somehow this original implementation looks correct ~~sorry for not fully understanding the paper because there are way too much maths to read.~~
+- Tested in A1111 WebUI 1.9.3 and [sd-mecha](https://github.com/ljleb/sd-mecha) 
+- [The SDXL code only permutates a few layers.](https://github.com/vladmandic/automatic/blob/dev/modules/merging/merge_rebasin.py)
+- [However the full permutation spec is present.](https://github.com/ogkalu2/Merge-Stable-Diffusion-models-without-distortion/issues/44). [OK, it turns out being entirely different.](https://www.diffchecker.com/WZKq6YiP/) I have posted a [text file](./docs/CLIP_G.txt) describing the **tensor size** of each layer. This implementation requires matching of tensor size.
 - **No pruning even it may not crash.** WebUI extensions / nodes will break.
 - **No CLIP fix has been revised.** Use other tools instead.
-- **Will detect SD1.5 / SDXL in auto.** SD2.1 will not be supported
+- **Will detect SD1.5 / SDXL in auto.** SD2.1 is not supported
 - Then I'll try my best to analysis the effect. Will post to [this article about the algorithm](https://github.com/6DammK9/nai-anime-pure-negative-prompt/blob/main/ch01/rebasin.md) and [my mega mix which is 70+ in 1](https://github.com/6DammK9/nai-anime-pure-negative-prompt/blob/main/ch05/README_XL.MD)
 - **~~Bonus task (probably impossible): Implement Algorithm 3 MERGEMANY~~** Probably infeasible, even with [sd-mecha](https://github.com/ljleb/sd-mecha/tree/main)'s well structured codebase. This implementation requires its own layer loading structre for iterlation. 
 
