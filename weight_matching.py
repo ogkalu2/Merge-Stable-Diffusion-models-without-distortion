@@ -109,7 +109,7 @@ def weight_matching(ps: PermutationSpec, params_a, params_b, special_layers=None
           if newL - oldL != 0:
             sum += abs((newL-oldL).item())
             number += 1
-            print(f"{p}: {newL - oldL}")
+            #print(f"{p}: {newL - oldL}")
 
           progress = progress or newL > oldL + 1e-12
 

@@ -2,5 +2,3 @@ __pycache__
 
 *.safetensors
 *.log
-*.json
-*.txt
