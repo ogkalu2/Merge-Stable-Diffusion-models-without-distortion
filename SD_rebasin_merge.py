@@ -1,11 +1,14 @@
 import argparse
 import torch
 import os
+from tqdm import tqdm
 from pathlib import Path
 from safetensors.torch import load_file, save_file
 
-from weight_matching import sdunet_permutation_spec, weight_matching, apply_permutation
-
+from weight_matching import weight_matching, apply_permutation
+from merge_PermSpec_SDXL import sdxl_permutation_spec
+from merge_PermSpec_SD1UNet import sdunet_permutation_spec
+#from merge_PermSpec_ResNet import vgg16_permutation_spec, resnet50_permutation_spec, resnet20_permutation_spec, cnn_permutation_spec, mlp_permutation_spec
 
 parser = argparse.ArgumentParser(description= "Merge two stable diffusion models with git re-basin")
 parser.add_argument("--model_a", type=str, help="Path to model a")
@@ -37,7 +40,7 @@ def load_model(path, device):
 
 def prune(model):
     keys = list(model.keys())
-    for k in keys:
+    for k in tqdm(keys, desc="pruning model", position=0):
         if "diffusion_model." not in k and "first_stage_model." not in k and "cond_stage_model." not in k:
             model.pop(k, None)
     return model
@@ -58,9 +61,24 @@ theta_1 = model_b
 alpha = float(args.alpha)
 iterations = int(args.iterations)
 step = alpha/iterations
-permutation_spec = sdunet_permutation_spec()
-special_keys = ["first_stage_model.decoder.norm_out.weight", "first_stage_model.decoder.norm_out.bias", "first_stage_model.encoder.norm_out.weight", 
-"first_stage_model.encoder.norm_out.bias", "model.diffusion_model.out.0.weight", "model.diffusion_model.out.0.bias"]
+
+modeltype_a = "sdxl" if "conditioner.embedders.1.model.transformer.resblocks.0.attn.in_proj_bias" in model_a else "sd1"
+modeltype_b = "sdxl" if "conditioner.embedders.1.model.transformer.resblocks.0.attn.in_proj_bias" in model_b else "sd1"
+
+print("Detected model type: " + modeltype_a)
+if modeltype_a != modeltype_b:
+    raise Exception("Model type mismatch!")
+
+permutation_spec = sdxl_permutation_spec() if modeltype_a == "sdxl" else sdunet_permutation_spec()
+
+special_keys = [
+    "first_stage_model.decoder.norm_out.weight", 
+    "first_stage_model.decoder.norm_out.bias", 
+    "first_stage_model.encoder.norm_out.weight", 
+    "first_stage_model.encoder.norm_out.bias", 
+    "model.diffusion_model.out.0.weight", 
+    "model.diffusion_model.out.0.bias"
+]
 
 if args.usefp16:
     print("Using half precision")
@@ -69,24 +87,27 @@ else:
 
 checkpoint_dict_skip_on_merge = ["cond_stage_model.transformer.text_model.embeddings.position_ids"]
 
-for x in range(iterations):
-    print(f"""
-    ---------------------
-         ITERATION {x+1}
-    ---------------------
-    """)
+for x in tqdm(range(iterations), desc="Main loop", position=0):
+    #print(f"""
+    #---------------------
+    #     ITERATION {x+1}
+    #---------------------
+    #""")
 
     # In order to reach a certain alpha value with a given number of steps,
     # You have to calculate an alpha for each individual iteration
     if x > 0:
         new_alpha = 1 - (1 - step*(1+x)) / (1 - step*(x))
     else:
-        new_alpha = step
-    print(f"new alpha = {new_alpha}\n")
+         new_alpha = step
+    #print(f"new alpha = {new_alpha}\n")
 
     # Add the models together in specific ratio to reach final ratio
-    for key in theta_0.keys():
+    for key in tqdm(theta_0.keys(), desc="Applying weighted_sum to theta", position=1):
+        # It does not fully describe SDXL
         if "model_" in key:
+            continue
+        if "conditioner.embedders.1.model" in key:
             continue
         if key in checkpoint_dict_skip_on_merge:
             continue
@@ -94,11 +115,11 @@ for x in range(iterations):
             theta_0[key] = (1 - new_alpha) * theta_0[key] + new_alpha * theta_1[key]
 
     if x == 0:
-        for key in theta_1.keys():
+        for key in tqdm(theta_1.keys(), desc="Applying theta_1 to theta_0", position=1):
             if "model" in key and key not in theta_0:
                 theta_0[key] = theta_1[key]
 
-    print("FINDING PERMUTATIONS")
+    #print("FINDING PERMUTATIONS")
 
     # Replace theta_0 with a permutated version using model A and B    
     first_permutation, y = weight_matching(permutation_spec, model_a, theta_0, usefp16=usefp16, device=device)
@@ -110,7 +131,7 @@ for x in range(iterations):
 
     # Weighted sum of the permutations
     
-    for key in special_keys:
+    for key in tqdm(special_keys, desc="Applying weighted_sum to special_keys", position=1):
         theta_0[key] = (1 - new_alpha) * (theta_0[key]) + (new_alpha) * (theta_3[key])
 
 # fix/check bad clip
