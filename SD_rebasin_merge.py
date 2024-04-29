@@ -7,6 +7,7 @@ from safetensors.torch import load_file, save_file
 
 from weight_matching import weight_matching, apply_permutation
 from merge_PermSpec_SDXL import sdxl_permutation_spec
+from merge_PermSpec_SD2 import sd2_permutation_spec
 from merge_PermSpec_SD1UNet import sdunet_permutation_spec
 #from merge_PermSpec_ResNet import vgg16_permutation_spec, resnet50_permutation_spec, resnet20_permutation_spec, cnn_permutation_spec, mlp_permutation_spec
 
@@ -45,6 +46,14 @@ def prune(model):
             model.pop(k, None)
     return model
 
+def detect_model_type(model):
+    if "conditioner.embedders.1.model.transformer.resblocks.0.attn.in_proj_bias" in model:
+        return "sdxl"
+    elif "cond_stage_model.model.transformer.resblocks.1.mlp.c_fc.bias" in model:
+        return "sd2"
+    else:
+        return "sd1"
+
 if args.model_a is None or args.model_b is None:
     parser.print_help()
     exit(-1)
@@ -62,14 +71,20 @@ alpha = float(args.alpha)
 iterations = int(args.iterations)
 step = alpha/iterations
 
-modeltype_a = "sdxl" if "conditioner.embedders.1.model.transformer.resblocks.0.attn.in_proj_bias" in model_a else "sd1"
-modeltype_b = "sdxl" if "conditioner.embedders.1.model.transformer.resblocks.0.attn.in_proj_bias" in model_b else "sd1"
+modeltype_a = detect_model_type(model_a)
+modeltype_b = detect_model_type(model_b)
 
 print("Detected model type: " + modeltype_a)
 if modeltype_a != modeltype_b:
     raise Exception("Model type mismatch!")
 
-permutation_spec = sdxl_permutation_spec() if modeltype_a == "sdxl" else sdunet_permutation_spec()
+permutation_spec_mapping = {
+    "sdxl": sdxl_permutation_spec(),
+    "sd2": sd2_permutation_spec(),
+    "sd1": sdunet_permutation_spec() 
+}
+
+permutation_spec = permutation_spec_mapping[modeltype_a]
 
 special_keys = [
     "first_stage_model.decoder.norm_out.weight", 
