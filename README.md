@@ -11,9 +11,9 @@ If not in the same directory then
 pathofmodela.ckpt and pathofmodelb.ckpt instead
 
 ### Notes for SDXL by DammK ###
-
-- This is a "just make it work" version with minimal option support. 
-- I pick this repo because most issues will point to here.
+- Tested in A1111 WebUI 1.9.3 and [sd-mecha](https://github.com/ljleb/sd-mecha) 
+- [The SDXL code only permutates a few layers.](https://github.com/vladmandic/automatic/blob/dev/modules/merging/merge_rebasin.py)
+- [However the full permutation spec is present.](https://github.com/ogkalu2/Merge-Stable-Diffusion-models-without-distortion/issues/44). [OK, it turns out being entirely different.](https://www.diffchecker.com/WZKq6YiP/) I have posted a [text file](./docs/CLIP_G.txt) describing the **tensor size** of each layer. This implementation requires matching of tensor size.
 - **No pruning even it may not crash.** WebUI extensions / nodes will break.
 - **No CLIP fix has been revised.** Use other tools instead.
 - **Will detect SD1.5 / SD2.1 / SDXL in auto.** 
@@ -40,5 +40,5 @@ Done!
 - Both comparasion are "avg / TIES-SOUP / avg(avg+TIES-SOUP) / rebasin(avg+TIES-SOUP)"
 
 ![xyz_grid-0841-740330577-8064-1623-3-48-20240428123657.jpg](docs/xyz_grid-0841-740330577-8064-1623-3-48-20240428123657.jpg)
-
 ![xyz_grid-0842-740330577-8064-1623-3-48-20240428125432.jpg](docs/xyz_grid-0842-740330577-8064-1623-3-48-20240428125432.jpg)
+
